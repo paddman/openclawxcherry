@@ -1,6 +1,7 @@
 {
   "name": "@openclaw/cherryflow-bridge",
   "version": "2026.6.11",
+  "private": true,
   "description": "Authenticated CherryFlow HTTP bridge for OpenClaw agent runs.",
   "repository": {
     "type": "git",
@@ -10,23 +11,20 @@
   "devDependencies": {
     "@openclaw/plugin-sdk": "workspace:*"
   },
+  "peerDependencies": {
+    "openclaw": ">=2026.6.11"
+  },
+  "peerDependenciesMeta": {
+    "openclaw": {
+      "optional": true
+    }
+  },
   "openclaw": {
     "extensions": [
       "./index.ts"
     ],
-    "install": {
-      "defaultChoice": "local",
-      "minHostVersion": ">=2026.6.11"
-    },
     "compat": {
       "pluginApi": ">=2026.6.11"
-    },
-    "build": {
-      "openclawVersion": "2026.6.11"
-    },
-    "release": {
-      "publishToClawHub": false,
-      "publishToNpm": false
     }
   }
 }
