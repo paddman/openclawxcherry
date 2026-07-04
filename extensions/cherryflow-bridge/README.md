@@ -1,12 +1,16 @@
-# CherryFlow Agent Bridge
+# CherryFlow Agent Runtime API
 
-This OpenClaw plugin exposes a small authenticated HTTP API for CherryFlow workflow nodes.
+This is the built-in HTTP ingress for **OpenClawXCherry**, the agent execution runtime created for CherryFlow.
+
+It is not an optional third-party integration between two unrelated products. CherryFlow is the workflow control plane; OpenClawXCherry is the runtime that executes CherryFlow agent nodes, tools, sessions, local models, and approved infrastructure actions.
+
+The plugin id remains `cherryflow-bridge` because it implements the explicit network boundary between the CherryFlow control plane and its OpenClawXCherry runtime.
 
 ## Responsibility split
 
-- CherryFlow owns workflow graphs, retries, approvals, versions, files, and audit history.
-- OpenClaw owns agent sessions, tools, memory, model execution, and messaging channels.
-- The bridge only converts a validated CherryFlow agent request into an OpenClaw subagent run.
+- CherryFlow owns workflow graphs, retries, approvals, versions, files, tenants, and audit history.
+- OpenClawXCherry owns agent sessions, tools, memory, model execution, host operations, and messaging channels.
+- This API converts a validated CherryFlow agent-node request into an OpenClawXCherry subagent run.
 
 ## Endpoints
 
@@ -22,7 +26,7 @@ Every request must include:
 x-openclaw-token: <shared token>
 ```
 
-## Configure
+## Configure OpenClawXCherry
 
 Set a long random token in the Gateway environment:
 
@@ -30,7 +34,7 @@ Set a long random token in the Gateway environment:
 export CHERRYFLOW_BRIDGE_TOKEN="replace-with-a-long-random-token"
 ```
 
-Enable and configure the plugin in `openclaw.json`:
+Enable and configure the runtime API in `openclaw.json`:
 
 ```json5
 {
@@ -54,14 +58,16 @@ Enable and configure the plugin in `openclaw.json`:
 }
 ```
 
-Restart the Gateway after enabling the plugin:
+Restart the OpenClawXCherry Gateway after enabling the API:
 
 ```bash
 openclaw gateway restart
 openclaw plugins inspect cherryflow-bridge --runtime --json
 ```
 
-Configure CherryFlow with the same token:
+The `openclaw` command and internal package names are retained for upstream compatibility. The deployed product role is OpenClawXCherry: CherryFlow's agent runtime.
+
+## Configure CherryFlow
 
 ```env
 CHERRYFLOW_AI_PROVIDER=openclaw
@@ -70,9 +76,9 @@ OPENCLAW_API_TOKEN=replace-with-a-long-random-token
 OPENCLAW_AGENT_ID=cherryflow-agent
 ```
 
-Use the actual Gateway origin for `OPENCLAW_BRIDGE_URL`. The bridge routes are served by the OpenClaw Gateway; the plugin does not start a second HTTP server.
+Use the actual OpenClawXCherry Gateway origin for `OPENCLAW_BRIDGE_URL`. The API is served by the Gateway and does not start a second HTTP server.
 
-## Test the bridge
+## Test the runtime
 
 Health:
 
@@ -93,6 +99,7 @@ curl -X POST http://127.0.0.1:18789/api/agents/run \
     "context": {
       "host": "server-01",
       "workflowRunId": "workflow-run-123",
+      "nodeRunId": "node-run-456",
       "riskLevel": "read"
     },
     "idempotencyKey": "workflow-run-123-diagnose-attempt-1",
@@ -136,18 +143,19 @@ Terminal response:
 ## Security behavior
 
 - Requests use a dedicated shared token and constant-time token comparison.
-- Agent ids are validated and can be restricted with `allowedAgentIds`.
+- Agent IDs are validated and can be restricted with `allowedAgentIds`.
 - Request bodies and prompts have hard size limits.
 - Concurrent runs are capped.
 - Reusing an idempotency key with different request data returns HTTP `409`.
-- CherryFlow context is clearly delimited and labelled as untrusted workflow data.
-- The bridge never enables tools itself. Tool allowlists, sandboxing, and approval policy remain part of the selected OpenClaw agent configuration.
+- CherryFlow context is delimited and labelled as untrusted workflow data.
+- The API never grants tools itself. Sandboxing and tool allowlists belong to the selected OpenClawXCherry agent.
+- Human approval belongs to CherryFlow and must occur before a write-capable runtime node executes.
 
-For write or destructive operations, use a separate agent with a narrow tool allowlist and let CherryFlow require human approval before it reaches the bridge node.
+For write or destructive operations, use a separate runtime agent with a narrow tool allowlist. Do not reuse a broad conversational agent for infrastructure changes.
 
 ## Current limitations
 
 - Run state is stored in Gateway memory and is lost when the Gateway restarts.
 - Completion uses CherryFlow polling rather than callbacks.
-- Cancellation is not exposed because the current trusted subagent runtime does not provide a bridge-safe abort method.
-- The response extracts the final assistant text from the session transcript; structured agent output should be returned as JSON text and validated by the CherryFlow workflow node.
+- Cancellation is not exposed because the trusted subagent runtime does not yet provide a bridge-safe abort method.
+- The API currently extracts final assistant text from the session transcript. Structured output should be returned as JSON text and validated by CherryFlow.
