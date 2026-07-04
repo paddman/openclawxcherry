@@ -1,7 +1,7 @@
 {
   "id": "cherryflow-bridge",
-  "name": "CherryFlow Agent Bridge",
-  "description": "Expose authenticated HTTP endpoints that execute OpenClaw agents for CherryFlow workflows.",
+  "name": "CherryFlow Agent Runtime API",
+  "description": "Expose the authenticated OpenClawXCherry runtime API used by CherryFlow agent workflow nodes.",
   "activation": {
     "onStartup": true
   },
@@ -12,7 +12,7 @@
       "tokenEnv": {
         "type": "string",
         "default": "CHERRYFLOW_BRIDGE_TOKEN",
-        "description": "Environment variable containing the shared bridge token."
+        "description": "Environment variable containing the shared CherryFlow runtime token."
       },
       "allowedAgentIds": {
         "type": "array",
@@ -23,7 +23,7 @@
         "default": [
           "cherryflow-agent"
         ],
-        "description": "Agent ids CherryFlow may execute. An empty array allows any syntactically valid agent id."
+        "description": "OpenClawXCherry agent IDs that CherryFlow may execute. An empty array allows any syntactically valid agent ID."
       },
       "maxConcurrentRuns": {
         "type": "integer",
@@ -58,7 +58,7 @@
       "retainSessions": {
         "type": "boolean",
         "default": true,
-        "description": "Keep OpenClaw session transcripts after bridge runs complete."
+        "description": "Keep OpenClawXCherry session transcripts after CherryFlow runtime runs complete."
       }
     }
   }
