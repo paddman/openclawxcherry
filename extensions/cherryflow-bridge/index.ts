@@ -21,13 +21,16 @@ function integerConfig(
 }
 
 function booleanConfig(config: Record<string, unknown>, key: string, fallback: boolean): boolean {
-  return typeof config[key] === "boolean" ? config[key] : fallback;
+  const value = config[key];
+  return typeof value === "boolean" ? value : fallback;
 }
 
 function agentIdsConfig(config: Record<string, unknown>): string[] {
   const value = config.allowedAgentIds;
   if (!Array.isArray(value)) return ["cherryflow-agent"];
-  return value.filter((entry): entry is string => typeof entry === "string" && Boolean(entry.trim()));
+  return value
+    .filter((entry): entry is string => typeof entry === "string" && Boolean(entry.trim()))
+    .map((entry) => entry.trim());
 }
 
 export default definePluginEntry({
