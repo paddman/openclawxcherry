@@ -35,8 +35,8 @@ function agentIdsConfig(config: Record<string, unknown>): string[] {
 
 export default definePluginEntry({
   id: "cherryflow-bridge",
-  name: "CherryFlow Agent Bridge",
-  description: "Authenticated CherryFlow HTTP bridge for OpenClaw agent runs",
+  name: "CherryFlow Agent Runtime API",
+  description: "Serve the OpenClawXCherry agent execution API used by CherryFlow workflow nodes",
   register(api) {
     const config = api.pluginConfig ?? {};
     const tokenEnv = stringConfig(config, "tokenEnv", "CHERRYFLOW_BRIDGE_TOKEN");
@@ -64,7 +64,7 @@ export default definePluginEntry({
 
     if (!token) {
       api.logger.warn(
-        `CherryFlow bridge is loaded but ${tokenEnv} is empty; HTTP requests will return 503 until configured`,
+        `OpenClawXCherry runtime API is loaded but ${tokenEnv} is empty; CherryFlow requests will return 503 until configured`,
       );
     }
 
