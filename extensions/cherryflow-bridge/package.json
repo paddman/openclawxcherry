@@ -2,7 +2,7 @@
   "name": "@openclaw/cherryflow-bridge",
   "version": "2026.6.11",
   "private": true,
-  "description": "Authenticated CherryFlow HTTP bridge for OpenClaw agent runs.",
+  "description": "OpenClawXCherry Agent Runtime API for CherryFlow workflow execution.",
   "repository": {
     "type": "git",
     "url": "https://github.com/paddman/openclawxcherry"
