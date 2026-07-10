@@ -427,7 +427,7 @@ tasks:
   <Accordion title="Behavior">
     - OpenClaw parses the `tasks:` block and checks each task against its own `interval`.
     - Only **due** tasks are included in the heartbeat prompt for that tick.
-    - If no tasks are due, the heartbeat is skipped entirely (`reason=no-tasks-due`) to avoid a wasted model call.
+    - If no tasks are due, the heartbeat is skipped entirely (`reason=no-tasks-due`) unless an active `AUTOPILOT.md` charter needs an idle-work turn.
     - Non-task content in `HEARTBEAT.md` is preserved and appended as additional context after the due-task list.
     - Task last-run timestamps are stored in session state (`heartbeatTaskState`), so intervals survive normal restarts.
     - Task timestamps are only advanced after a heartbeat run completes its normal reply path. Skipped `empty-heartbeat-file` / `no-tasks-due` runs do not mark tasks as completed.
@@ -436,6 +436,15 @@ tasks:
 </AccordionGroup>
 
 Task mode is useful when you want one heartbeat file to hold several periodic checks without paying for all of them every tick.
+
+### AUTOPILOT.md
+
+`AUTOPILOT.md` is an optional, non-empty charter that lets an otherwise idle
+heartbeat discover one bounded task from explicitly approved sources. It is
+ignored while a due heartbeat task, cron or exec event, or inferred commitment
+needs attention. It does not grant tool permissions or bypass approvals.
+
+See [Autopilot](/automation/autopilot) for the charter format and safety model.
 
 ### Can the agent update HEARTBEAT.md?
 

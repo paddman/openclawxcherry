@@ -1301,6 +1301,7 @@
                   "automation/tasks",
                   "automation/taskflow",
                   "automation/standing-orders",
+                  "automation/autopilot",
                   "automation/hooks"
                 ]
               },
