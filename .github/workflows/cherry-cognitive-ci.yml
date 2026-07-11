@@ -68,12 +68,12 @@ jobs:
             2>&1 | tee /tmp/cherry-tests.log
 
       - name: Detect formatting drift
-        id: format-drift
+        id: format_drift
         continue-on-error: true
         run: git diff --exit-code -- extensions/cherry-cognitive
 
       - name: Detect lockfile drift
-        id: lockfile-drift
+        id: lockfile_drift
         continue-on-error: true
         run: git diff --exit-code -- pnpm-lock.yaml
 
@@ -95,8 +95,8 @@ jobs:
         env:
           LINT_OUTCOME: ${{ steps.lint.outcome }}
           TEST_OUTCOME: ${{ steps.tests.outcome }}
-          FORMAT_OUTCOME: ${{ steps['format-drift'].outcome }}
-          LOCKFILE_OUTCOME: ${{ steps['lockfile-drift'].outcome }}
+          FORMAT_OUTCOME: ${{ steps.format_drift.outcome }}
+          LOCKFILE_OUTCOME: ${{ steps.lockfile_drift.outcome }}
         run: |
           echo "lint=$LINT_OUTCOME tests=$TEST_OUTCOME format=$FORMAT_OUTCOME lockfile=$LOCKFILE_OUTCOME"
           if [[ "$LINT_OUTCOME" != "success" || "$TEST_OUTCOME" != "success" || "$FORMAT_OUTCOME" != "success" || "$LOCKFILE_OUTCOME" != "success" ]]; then
