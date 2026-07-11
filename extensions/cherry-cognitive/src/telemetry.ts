@@ -6,6 +6,7 @@ import type { ToolPolicyEngine } from "./policy.js";
 import type { TrackedCognitiveRuntime } from "./tracked-runtime.js";
 
 export type CognitiveHealthSnapshot = {
+  runtimeOperational: true;
   status: "ok" | "degraded" | "critical";
   generatedAt: number;
   uptimeSeconds: number;
@@ -82,6 +83,7 @@ export function buildCognitiveHealth(
   const policyState = policy.inspect();
 
   return {
+    runtimeOperational: true,
     status,
     generatedAt: now,
     uptimeSeconds: Math.max(0, Math.round((now - startedAt) / 1_000)),
@@ -132,7 +134,7 @@ export function renderPrometheusMetrics(snapshot: CognitiveHealthSnapshot): stri
   const lines = [
     "# HELP openclaw_cherry_cognitive_up Whether the Cherry Cognitive runtime is operational.",
     "# TYPE openclaw_cherry_cognitive_up gauge",
-    metricLine("openclaw_cherry_cognitive_up", snapshot.status === "critical" ? 0 : 1),
+    metricLine("openclaw_cherry_cognitive_up", snapshot.runtimeOperational ? 1 : 0),
     "# HELP openclaw_cherry_cognitive_uptime_seconds Runtime uptime in seconds.",
     "# TYPE openclaw_cherry_cognitive_uptime_seconds gauge",
     metricLine("openclaw_cherry_cognitive_uptime_seconds", snapshot.uptimeSeconds),
@@ -221,9 +223,12 @@ export function createHealthHandler(
   return async (_req, res) => {
     try {
       const snapshot = buildCognitiveHealth(runtime, autonomy, memory, policy, learning);
-      writeJson(res, snapshot.status === "critical" ? 503 : 200, snapshot);
+      // A critical monitored incident is cognitive data, not a runtime failure.
+      // Return 200 while the plugin is operational so orchestrators do not restart it.
+      writeJson(res, 200, snapshot);
     } catch (error) {
       writeJson(res, 500, {
+        runtimeOperational: false,
         status: "error",
         message: error instanceof Error ? error.message : String(error),
       });
