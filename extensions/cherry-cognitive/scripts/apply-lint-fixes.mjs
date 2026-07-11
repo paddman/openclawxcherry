@@ -47,7 +47,13 @@ export function sanitizeControlCharacters(value: string): string {
 );
 
 await applyControlCharacterMigration("ingestion.ts");
-for (const name of ["autonomy.ts", "runtime.ts", "prediction.ts", "consolidation.ts", "learning.ts"]) {
+for (const name of [
+  "autonomy.ts",
+  "runtime.ts",
+  "prediction.ts",
+  "consolidation.ts",
+  "learning.ts",
+]) {
   await applyControlCharacterMigration(name, 'import { dirname, join } from "node:path";\n');
 }
 
@@ -56,7 +62,7 @@ for (const name of ["autonomy.ts", "runtime.ts", "prediction.ts", "consolidation
   source = replaceAllChecked(
     source,
     '    case "low":\n    default:\n      return 0;',
-    '    default:\n      return 0;',
+    "    default:\n      return 0;",
   );
   await writeSource("policy.ts", source);
 }
@@ -66,7 +72,7 @@ for (const name of ["autonomy.ts", "runtime.ts", "prediction.ts", "consolidation
   source = replaceAllChecked(
     source,
     '    case "generic":\n    default:\n      return normalizeGeneric(envelope);',
-    '    default:\n      return normalizeGeneric(envelope);',
+    "    default:\n      return normalizeGeneric(envelope);",
   );
   await writeSource("ingestion.ts", source);
 }
@@ -76,11 +82,11 @@ for (const name of ["autonomy.ts", "runtime.ts", "prediction.ts", "consolidation
   source = replaceAllChecked(
     source,
     '    case "low":\n    default:\n      return 0.16;',
-    '    default:\n      return 0.16;',
+    "    default:\n      return 0.16;",
   );
   source = source.replaceAll(
-    '.sort((left, right) => right.createdAt - left.createdAt)',
-    '.toSorted((left, right) => right.createdAt - left.createdAt)',
+    ".sort((left, right) => right.createdAt - left.createdAt)",
+    ".toSorted((left, right) => right.createdAt - left.createdAt)",
   );
   await writeSource("autonomy.ts", source);
 }
@@ -90,33 +96,33 @@ for (const name of ["autonomy.ts", "runtime.ts", "prediction.ts", "consolidation
   source = replaceAllChecked(
     source,
     '    case "text":\n    default:\n      return 0.56;',
-    '    default:\n      return 0.56;',
+    "    default:\n      return 0.56;",
   );
   source = replaceAllChecked(
     source,
-    'return this.getSession(sessionKey).goals.map((goal) => ({ ...goal }));',
-    'return this.getSession(sessionKey).goals.map((goal) => structuredClone(goal));',
+    "return this.getSession(sessionKey).goals.map((goal) => ({ ...goal }));",
+    "return this.getSession(sessionKey).goals.map((goal) => structuredClone(goal));",
   );
   source = source.replaceAll(
-    '.sort((left, right) => right.priority - left.priority)',
-    '.toSorted((left, right) => right.priority - left.priority)',
+    ".sort((left, right) => right.priority - left.priority)",
+    ".toSorted((left, right) => right.priority - left.priority)",
   );
   source = source.replaceAll(
-    '.sort((left, right) => right.score - left.score || right.timestamp - left.timestamp)',
-    '.toSorted((left, right) => right.score - left.score || right.timestamp - left.timestamp)',
+    ".sort((left, right) => right.score - left.score || right.timestamp - left.timestamp)",
+    ".toSorted((left, right) => right.score - left.score || right.timestamp - left.timestamp)",
   );
   source = source.replaceAll(
-    '.map((goal) => ({ ...goal }));',
-    '.map((goal) => structuredClone(goal));',
+    ".map((goal) => ({ ...goal }));",
+    ".map((goal) => structuredClone(goal));",
   );
   source = source.replaceAll(
-    '.map((item) => ({ ...item }));',
-    '.map((item) => structuredClone(item));',
+    ".map((item) => ({ ...item }));",
+    ".map((item) => structuredClone(item));",
   );
   source = replaceAllChecked(
     source,
-    'session.episodicMemory.slice(-10).map((episode) => ({ ...episode }))',
-    'session.episodicMemory.slice(-10).map((episode) => structuredClone(episode))',
+    "session.episodicMemory.slice(-10).map((episode) => ({ ...episode }))",
+    "session.episodicMemory.slice(-10).map((episode) => structuredClone(episode))",
   );
   source = replaceAllChecked(
     source,
@@ -183,8 +189,8 @@ for (const name of ["autonomy.ts", "runtime.ts", "prediction.ts", "consolidation
 {
   let source = await readSource("prediction.ts");
   source = source.replaceAll(
-    '.sort((left, right) => right.createdAt - left.createdAt)',
-    '.toSorted((left, right) => right.createdAt - left.createdAt)',
+    ".sort((left, right) => right.createdAt - left.createdAt)",
+    ".toSorted((left, right) => right.createdAt - left.createdAt)",
   );
   await writeSource("prediction.ts", source);
 }
@@ -194,7 +200,7 @@ for (const name of ["autonomy.ts", "runtime.ts", "prediction.ts", "consolidation
   source = replaceAllChecked(
     source,
     '    case "fact":\n    default:\n      return `Observed fact: ${summary}`;',
-    '    default:\n      return `Observed fact: ${summary}`;',
+    "    default:\n      return `Observed fact: ${summary}`;",
   );
   source = replaceAllChecked(
     source,

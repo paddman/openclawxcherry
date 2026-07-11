@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { sanitizeControlCharacters } from "./text-sanitize.js";
 import type {
   CognitiveConfig,
   CognitiveModality,
@@ -57,16 +58,7 @@ const RISK_TERMS = [
   "ปิดระบบ",
 ];
 
-const URGENT_TERMS = [
-  "urgent",
-  "immediately",
-  "now",
-  "asap",
-  "ด่วน",
-  "ทันที",
-  "ตอนนี้",
-  "เร่ง",
-];
+const URGENT_TERMS = ["urgent", "immediately", "now", "asap", "ด่วน", "ทันที", "ตอนนี้", "เร่ง"];
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -92,7 +84,7 @@ function cleanString(value: unknown, fallback: string, maxLength = 500): string 
   if (typeof value !== "string") {
     return fallback;
   }
-  const cleaned = value.replace(/[\u0000-\u001f\u007f]/gu, " ").replace(/\s+/gu, " ").trim();
+  const cleaned = sanitizeControlCharacters(value).replace(/\s+/gu, " ").trim();
   return cleaned ? cleaned.slice(0, maxLength) : fallback;
 }
 
@@ -100,7 +92,14 @@ function stringArray(value: unknown): string[] {
   if (!Array.isArray(value)) {
     return [];
   }
-  return [...new Set(value.filter((item): item is string => typeof item === "string").map((item) => item.trim()).filter(Boolean))].slice(0, 128);
+  return [
+    ...new Set(
+      value
+        .filter((item): item is string => typeof item === "string")
+        .map((item) => item.trim())
+        .filter(Boolean),
+    ),
+  ].slice(0, 128);
 }
 
 export function parseCognitiveConfig(value: Record<string, unknown> | undefined): CognitiveConfig {
@@ -108,7 +107,12 @@ export function parseCognitiveConfig(value: Record<string, unknown> | undefined)
   return {
     enabled: booleanValue(source.enabled, DEFAULT_CONFIG.enabled),
     identity: cleanString(source.identity, DEFAULT_CONFIG.identity, 120),
-    tickIntervalMs: integerInRange(source.tickIntervalMs, DEFAULT_CONFIG.tickIntervalMs, 1_000, 60_000),
+    tickIntervalMs: integerInRange(
+      source.tickIntervalMs,
+      DEFAULT_CONFIG.tickIntervalMs,
+      1_000,
+      60_000,
+    ),
     persistIntervalMs: integerInRange(
       source.persistIntervalMs,
       DEFAULT_CONFIG.persistIntervalMs,
@@ -128,10 +132,7 @@ export function parseCognitiveConfig(value: Record<string, unknown> | undefined)
       5_000,
     ),
     promptInjection: booleanValue(source.promptInjection, DEFAULT_CONFIG.promptInjection),
-    heartbeatAwareness: booleanValue(
-      source.heartbeatAwareness,
-      DEFAULT_CONFIG.heartbeatAwareness,
-    ),
+    heartbeatAwareness: booleanValue(source.heartbeatAwareness, DEFAULT_CONFIG.heartbeatAwareness),
     autoObserveMessages: booleanValue(
       source.autoObserveMessages,
       DEFAULT_CONFIG.autoObserveMessages,
@@ -200,7 +201,6 @@ function modalityBias(modality: CognitiveModality): number {
       return 0.62;
     case "internal":
       return 0.5;
-    case "text":
     default:
       return 0.56;
   }
@@ -262,7 +262,9 @@ class NcaField {
   }
 
   inject(observation: Observation): void {
-    const seed = hashText(`${observation.modality}:${observation.source ?? "unknown"}:${observation.summary}`);
+    const seed = hashText(
+      `${observation.modality}:${observation.source ?? "unknown"}:${observation.summary}`,
+    );
     const primaryIndex = seed % this.state.cells.length;
     const secondaryIndex = (primaryIndex + 1 + (seed % 7)) % this.state.cells.length;
     const signal = {
@@ -293,7 +295,9 @@ class NcaField {
   step(): void {
     const previous = this.state.cells;
     const next = previous.map((cell, index) => {
-      const neighbors = this.neighborIndexes(index).map((neighborIndex) => previous[neighborIndex] ?? createCell());
+      const neighbors = this.neighborIndexes(index).map(
+        (neighborIndex) => previous[neighborIndex] ?? createCell(),
+      );
       const neighborActivation = mean(neighbors.map((neighbor) => neighbor.activation));
       const neighborSalience = mean(neighbors.map((neighbor) => neighbor.salience));
       const neighborNovelty = mean(neighbors.map((neighbor) => neighbor.novelty));
@@ -416,7 +420,9 @@ function trimMetadata(value: unknown): Record<string, unknown> | undefined {
   return Object.fromEntries(entries);
 }
 
-export function inferInboundModality(metadata: Record<string, unknown> | undefined): CognitiveModality {
+export function inferInboundModality(
+  metadata: Record<string, unknown> | undefined,
+): CognitiveModality {
   if (!metadata) {
     return "text";
   }
@@ -498,11 +504,15 @@ export class CherryCognitiveRuntime {
     const summary = cleanString(input.summary, "Unspecified observation", 1_200);
     const prior = session.workingMemory.slice(-8);
     const highestOverlap = Math.max(...prior.map((item) => overlapRatio(item.summary, summary)), 0);
-    const risk = clamp01(termScore(summary, RISK_TERMS) * 0.78 + termScore(summary, URGENT_TERMS) * 0.22);
+    const risk = clamp01(
+      termScore(summary, RISK_TERMS) * 0.78 + termScore(summary, URGENT_TERMS) * 0.22,
+    );
     const confidence = clamp01(finiteNumber(input.confidence, 0.7));
     const novelty = clamp01(1 - highestOverlap * 0.82);
     const salience = clamp01(
-      finiteNumber(input.salience, modalityBias(input.modality)) + risk * 0.2 + termScore(summary, URGENT_TERMS) * 0.12,
+      finiteNumber(input.salience, modalityBias(input.modality)) +
+        risk * 0.2 +
+        termScore(summary, URGENT_TERMS) * 0.12,
     );
     const observation: Observation = {
       id: randomUUID(),
@@ -655,10 +665,12 @@ export class CherryCognitiveRuntime {
   }
 
   listGoals(sessionKey: string | undefined): Goal[] {
-    return this.getSession(sessionKey).goals.map((goal) => ({ ...goal }));
+    return this.getSession(sessionKey).goals.map((goal) => structuredClone(goal));
   }
 
-  snapshot(sessionKey: string | undefined): SessionCognitiveState & { fieldSnapshot: NcaFieldSnapshot } {
+  snapshot(
+    sessionKey: string | undefined,
+  ): SessionCognitiveState & { fieldSnapshot: NcaFieldSnapshot } {
     const session = this.getSession(sessionKey);
     return {
       ...structuredClone(session),
@@ -671,25 +683,31 @@ export class CherryCognitiveRuntime {
     const field = new NcaField(session.field).snapshot();
     const activeGoals = session.goals
       .filter((goal) => goal.status === "active")
-      .sort((left, right) => right.priority - left.priority)
+      .toSorted((left, right) => right.priority - left.priority)
       .slice(0, 8)
-      .map((goal) => ({ ...goal }));
+      .map((goal) => structuredClone(goal));
     const unresolvedSignals = session.workspace
       .filter((item) => item.risk >= 0.34 || item.confidence < 0.6)
       .slice(0, 8)
-      .map((item) => ({ ...item }));
+      .map((item) => structuredClone(item));
     const recommendations: string[] = [];
     if (session.selfModel.riskLevel === "high" || session.selfModel.riskLevel === "critical") {
-      recommendations.push("Verify the highest-risk signal with an independent source before acting.");
+      recommendations.push(
+        "Verify the highest-risk signal with an independent source before acting.",
+      );
     }
     if (session.selfModel.confidence < 0.6) {
-      recommendations.push("Collect more evidence or ask a targeted clarification before committing to a plan.");
+      recommendations.push(
+        "Collect more evidence or ask a targeted clarification before committing to a plan.",
+      );
     }
     if (activeGoals.length > 3) {
       recommendations.push("Prioritize or pause lower-value goals to reduce goal competition.");
     }
     if (unresolvedSignals.length === 0) {
-      recommendations.push("No major unresolved signal is active; continue monitoring and validate outcomes.");
+      recommendations.push(
+        "No major unresolved signal is active; continue monitoring and validate outcomes.",
+      );
     }
     const report: ReflectionReport = {
       sessionKey: session.sessionKey,
@@ -701,7 +719,7 @@ export class CherryCognitiveRuntime {
       field,
       activeGoals,
       unresolvedSignals,
-      recentEpisodes: session.episodicMemory.slice(-10).map((episode) => ({ ...episode })),
+      recentEpisodes: session.episodicMemory.slice(-10).map((episode) => structuredClone(episode)),
       recommendations,
       generatedAt: Date.now(),
     };
@@ -719,7 +737,7 @@ export class CherryCognitiveRuntime {
     const field = new NcaField(session.field).snapshot();
     const goals = session.goals
       .filter((goal) => goal.status === "active")
-      .sort((left, right) => right.priority - left.priority)
+      .toSorted((left, right) => right.priority - left.priority)
       .slice(0, 4);
     const workspace = session.workspace.slice(0, 5);
     const lines = [
@@ -762,11 +780,7 @@ export class CherryCognitiveRuntime {
     );
   }
 
-  recordApproval(
-    sessionKey: string | undefined,
-    toolName: string,
-    decision: string,
-  ): void {
+  recordApproval(sessionKey: string | undefined, toolName: string, decision: string): void {
     const session = this.getSession(sessionKey);
     this.addEpisode(session, {
       kind: "action",
@@ -803,28 +817,36 @@ export class CherryCognitiveRuntime {
         confidence: observation.confidence,
         timestamp: observation.timestamp,
       }))
-      .sort((left, right) => right.score - left.score || right.timestamp - left.timestamp)
+      .toSorted((left, right) => right.score - left.score || right.timestamp - left.timestamp)
       .slice(0, 8);
     session.workspace = workspace;
     const field = new NcaField(session.field).snapshot();
     const top = workspace[0];
     const activeGoal = session.goals
       .filter((goal) => goal.status === "active")
-      .sort((left, right) => right.priority - left.priority)[0];
+      .toSorted((left, right) => right.priority - left.priority)[0];
     const recentConfidence = session.workingMemory.slice(-8).map((item) => item.confidence);
     const confidence = recentConfidence.length > 0 ? mean(recentConfidence) : 0.5;
-    const uncertainty = clamp01(mean(session.workingMemory.slice(-8).map((item) => item.uncertainty)) * 0.7 + field.uncertainty * 0.3);
+    const uncertainty = clamp01(
+      mean(session.workingMemory.slice(-8).map((item) => item.uncertainty)) * 0.7 +
+        field.uncertainty * 0.3,
+    );
     const highestRisk = Math.max(field.risk, ...workspace.map((item) => item.risk), 0);
     session.selfModel.identity = this.config.identity;
     session.selfModel.currentFocus = top?.summary;
-    session.selfModel.currentGoal = activeGoal?.description ?? session.latestPrompt ?? session.selfModel.currentGoal;
+    session.selfModel.currentGoal =
+      activeGoal?.description ?? session.latestPrompt ?? session.selfModel.currentGoal;
     session.selfModel.confidence = clamp01(confidence);
     session.selfModel.uncertainty = uncertainty;
     session.selfModel.riskLevel = riskLevel(highestRisk);
     session.selfModel.updatedAt = Date.now();
     session.worldModel.activeSignals = workspace.slice(0, 5).map((item) => item.summary);
     session.worldModel.knownSources = [
-      ...new Set(session.workingMemory.map((item) => item.source).filter((source): source is string => Boolean(source))),
+      ...new Set(
+        session.workingMemory
+          .map((item) => item.source)
+          .filter((source): source is string => Boolean(source)),
+      ),
     ].slice(0, 32);
     session.worldModel.currentConditions = workspace
       .filter((item) => item.risk >= 0.34 || item.score >= 0.68)
@@ -912,10 +934,9 @@ export class CherryCognitiveRuntime {
     const payload: PersistedCognitiveState = {
       version: 1,
       savedAt,
-      sessions: [...this.sessions.values()].map((session) => ({
-        ...structuredClone(session),
-        lastPersistedAt: savedAt,
-      })),
+      sessions: [...this.sessions.values()].map((session) =>
+        Object.assign(structuredClone(session), { lastPersistedAt: savedAt }),
+      ),
     };
     await mkdir(dirname(this.storagePath), { recursive: true });
     const temporaryPath = `${this.storagePath}.${process.pid}.${Date.now()}.tmp`;

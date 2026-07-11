@@ -72,10 +72,7 @@ Automatic matching is intentionally conservative. It does not automatically refu
   "action": "refute",
   "predictionId": "<prediction-id>",
   "summary": "Storage latency remained below 10ms during the prediction window",
-  "evidenceSummaries": [
-    "Datastore p95 latency was 8ms",
-    "No storage alarm was generated"
-  ]
+  "evidenceSummaries": ["Datastore p95 latency was 8ms", "No storage alarm was generated"]
 }
 ```
 

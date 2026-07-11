@@ -6,15 +6,11 @@ import type {
 import { Type } from "typebox";
 import type { AutonomyPlanner } from "./autonomy.js";
 import type { MemoryConsolidator, SemanticMemoryCategory } from "./consolidation.js";
-import {
-  normalizeIngestion,
-  parseIngestionPayload,
-  type IngestionKind,
-} from "./ingestion.js";
+import { normalizeIngestion, parseIngestionPayload, type IngestionKind } from "./ingestion.js";
 import type { AdaptiveLearningEngine } from "./learning.js";
 import type { ToolPolicyEngine } from "./policy.js";
-import type { TrackedCognitiveRuntime } from "./tracked-runtime.js";
 import { buildCognitiveHealth } from "./telemetry.js";
+import type { TrackedCognitiveRuntime } from "./tracked-runtime.js";
 
 const INGESTION_KINDS: IngestionKind[] = [
   "generic",
@@ -104,7 +100,10 @@ function stringListParam(params: Record<string, unknown>, name: string): string[
   if (!Array.isArray(value) || !value.every((item) => typeof item === "string")) {
     throw new Error(`${name} must be an array of strings`);
   }
-  return value.map((item) => item.trim()).filter(Boolean).slice(0, 32);
+  return value
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .slice(0, 32);
 }
 
 function result(details: Record<string, unknown>) {
@@ -191,7 +190,10 @@ export function createAdvancedCognitiveToolFactories(params: {
         if (action === "list") {
           return result({
             ok: true,
-            proposals: autonomy.list(sessionKey, booleanParam(toolParams, "includeClosed") ?? false),
+            proposals: autonomy.list(
+              sessionKey,
+              booleanParam(toolParams, "includeClosed") ?? false,
+            ),
           });
         }
         if (action === "derive") {
@@ -303,10 +305,7 @@ export function createAdvancedCognitiveToolFactories(params: {
           return result({ ok: true, count: memories.length, memories });
         }
         if (action === "forget") {
-          const removed = memory.forget(
-            sessionKey,
-            textParam(toolParams, "memoryId", true) ?? "",
-          );
+          const removed = memory.forget(sessionKey, textParam(toolParams, "memoryId", true) ?? "");
           return result({ ok: removed, removed });
         }
         throw new Error(`Unsupported memory action: ${action}`);

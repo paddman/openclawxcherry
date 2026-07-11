@@ -20,7 +20,11 @@ const MODALITIES: CognitiveModality[] = [
 
 const GOAL_STATUSES: GoalStatus[] = ["active", "paused", "completed", "cancelled"];
 
-function textParam(params: Record<string, unknown>, name: string, required = false): string | undefined {
+function textParam(
+  params: Record<string, unknown>,
+  name: string,
+  required = false,
+): string | undefined {
   const value = params[name];
   if (value === undefined && !required) {
     return undefined;
@@ -125,9 +129,7 @@ export function createCognitiveToolFactories(
         description: Type.Optional(Type.String({ minLength: 1, maxLength: 800 })),
         priority: Type.Optional(Type.Number({ minimum: 0, maximum: 1 })),
         goalId: Type.Optional(Type.String({ minLength: 1, maxLength: 100 })),
-        status: Type.Optional(
-          Type.Unsafe<GoalStatus>({ type: "string", enum: GOAL_STATUSES }),
-        ),
+        status: Type.Optional(Type.Unsafe<GoalStatus>({ type: "string", enum: GOAL_STATUSES })),
         progress: Type.Optional(Type.Number({ minimum: 0, maximum: 1 })),
         notes: Type.Optional(Type.String({ maxLength: 1_000 })),
       }),
@@ -150,11 +152,15 @@ export function createCognitiveToolFactories(
           if (status && !GOAL_STATUSES.includes(status as GoalStatus)) {
             throw new Error(`Unsupported goal status: ${status}`);
           }
-          const goal = runtime.updateGoal(sessionKey(ctx), textParam(params, "goalId", true) ?? "", {
-            status: status as GoalStatus | undefined,
-            progress: numberParam(params, "progress"),
-            notes: textParam(params, "notes"),
-          });
+          const goal = runtime.updateGoal(
+            sessionKey(ctx),
+            textParam(params, "goalId", true) ?? "",
+            {
+              status: status as GoalStatus | undefined,
+              progress: numberParam(params, "progress"),
+              notes: textParam(params, "notes"),
+            },
+          );
           return result({ ok: true, goal });
         }
         throw new Error(`Unsupported action: ${action}`);

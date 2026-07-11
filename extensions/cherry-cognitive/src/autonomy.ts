@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { sanitizeControlCharacters } from "./text-sanitize.js";
 import type { ReflectionReport, SessionCognitiveState } from "./types.js";
 
 export type AutonomyMode = "off" | "suggest" | "guarded";
@@ -70,7 +71,7 @@ function cleanText(value: unknown, fallback: string, maxLength = 1_000): string 
   if (typeof value !== "string") {
     return fallback;
   }
-  const cleaned = value.replace(/[\u0000-\u001f\u007f]/gu, " ").replace(/\s+/gu, " ").trim();
+  const cleaned = sanitizeControlCharacters(value).replace(/\s+/gu, " ").trim();
   return cleaned ? cleaned.slice(0, maxLength) : fallback;
 }
 
@@ -89,12 +90,14 @@ function stringArray(value: unknown): string[] {
   if (!Array.isArray(value)) {
     return [];
   }
-  return [...new Set(
-    value
-      .filter((item): item is string => typeof item === "string")
-      .map((item) => item.trim().toLocaleLowerCase())
-      .filter(Boolean),
-  )].slice(0, 256);
+  return [
+    ...new Set(
+      value
+        .filter((item): item is string => typeof item === "string")
+        .map((item) => item.trim().toLocaleLowerCase())
+        .filter(Boolean),
+    ),
+  ].slice(0, 256);
 }
 
 function nestedConfig(pluginConfig: Record<string, unknown> | undefined): Record<string, unknown> {
@@ -116,15 +119,15 @@ export function parseAutonomyConfig(
     enabled: booleanValue(source.enabled, DEFAULT_CONFIG.enabled),
     mode,
     maxProposalsPerSession: Math.round(
-      numberValue(
-        source.maxProposalsPerSession,
-        DEFAULT_CONFIG.maxProposalsPerSession,
-        1,
-        500,
-      ),
+      numberValue(source.maxProposalsPerSession, DEFAULT_CONFIG.maxProposalsPerSession, 1, 500),
     ),
     proposalTtlMs: Math.round(
-      numberValue(source.proposalTtlMs, DEFAULT_CONFIG.proposalTtlMs, 60_000, 30 * 24 * 60 * 60 * 1_000),
+      numberValue(
+        source.proposalTtlMs,
+        DEFAULT_CONFIG.proposalTtlMs,
+        60_000,
+        30 * 24 * 60 * 60 * 1_000,
+      ),
     ),
     minimumConfidence: numberValue(
       source.minimumConfidence,
@@ -151,7 +154,6 @@ function riskNumber(level: ReflectionReport["riskLevel"]): number {
       return 0.76;
     case "medium":
       return 0.46;
-    case "low":
     default:
       return 0.16;
   }
@@ -181,7 +183,9 @@ function isDiagnosticTool(toolName: string): boolean {
   );
 }
 
-function proposalFingerprint(proposal: Pick<ActionProposal, "title" | "suggestedTool" | "objective">): string {
+function proposalFingerprint(
+  proposal: Pick<ActionProposal, "title" | "suggestedTool" | "objective">,
+): string {
   return `${proposal.title.toLocaleLowerCase()}|${proposal.objective.toLocaleLowerCase()}|${proposal.suggestedTool ?? "none"}`;
 }
 
@@ -241,7 +245,9 @@ export class AutonomyPlanner {
       title: cleanText(input.title, "Untitled proposal", 300),
       objective: cleanText(input.objective, "No objective supplied", 800),
       rationale: cleanText(input.rationale, "No rationale supplied", 1_200),
-      evidence: [...new Set((input.evidence ?? []).map((item) => cleanText(item, "", 500)).filter(Boolean))].slice(0, 16),
+      evidence: [
+        ...new Set((input.evidence ?? []).map((item) => cleanText(item, "", 500)).filter(Boolean)),
+      ].slice(0, 16),
       expectedOutcome: cleanText(input.expectedOutcome, "Unknown outcome", 800),
       risk,
       confidence,
@@ -255,7 +261,9 @@ export class AutonomyPlanner {
     const fingerprint = proposalFingerprint(proposal);
     const duplicate = existing.find(
       (item) =>
-        item.status === "proposed" && proposalFingerprint(item) === fingerprint && item.expiresAt > now,
+        item.status === "proposed" &&
+        proposalFingerprint(item) === fingerprint &&
+        item.expiresAt > now,
     );
     if (duplicate) {
       duplicate.updatedAt = now;
@@ -272,7 +280,7 @@ export class AutonomyPlanner {
     this.proposalsBySession.set(
       key,
       existing
-        .sort((left, right) => right.createdAt - left.createdAt)
+        .toSorted((left, right) => right.createdAt - left.createdAt)
         .slice(0, this.config.maxProposalsPerSession),
     );
     this.dirty = true;
@@ -297,11 +305,13 @@ export class AutonomyPlanner {
       proposals.push(
         this.propose(sessionKey, {
           title: "Verify high-risk signal independently",
-          objective: topSignal?.summary ?? reflection.focus ?? "Validate the active high-risk condition",
+          objective:
+            topSignal?.summary ?? reflection.focus ?? "Validate the active high-risk condition",
           rationale:
             "The cognitive workspace reports elevated risk. Acting on one source would create avoidable false-positive and operational risk.",
           evidence: reflection.unresolvedSignals.slice(0, 4).map((item) => item.summary),
-          expectedOutcome: "Confirm or reject the incident hypothesis using an independent read-only source.",
+          expectedOutcome:
+            "Confirm or reject the incident hypothesis using an independent read-only source.",
           risk: Math.max(0.22, risk - 0.45),
           confidence: reflection.confidence,
           suggestedTool: "status",
@@ -322,7 +332,8 @@ export class AutonomyPlanner {
           rationale:
             "Confidence is below the configured autonomy threshold or uncertainty is elevated. More evidence is required before selecting a consequential action.",
           evidence: reflection.unresolvedSignals.slice(0, 6).map((item) => item.summary),
-          expectedOutcome: "Increase confidence and narrow the plausible causes without changing production state.",
+          expectedOutcome:
+            "Increase confidence and narrow the plausible causes without changing production state.",
           risk: 0.12,
           confidence: Math.max(0.5, 1 - reflection.uncertainty),
           suggestedTool: "search",
@@ -344,7 +355,8 @@ export class AutonomyPlanner {
             state.selfModel.currentFocus ?? "No dominant focus",
             ...state.worldModel.currentConditions.slice(0, 3),
           ],
-          expectedOutcome: "Produce one verifiable next step and update goal progress after observing the result.",
+          expectedOutcome:
+            "Produce one verifiable next step and update goal progress after observing the result.",
           risk: Math.min(0.38, risk * 0.45),
           confidence: reflection.confidence,
           suggestedTool: "inspect",
@@ -365,7 +377,8 @@ export class AutonomyPlanner {
           rationale:
             "No major unresolved signal is active and current risk is low. The safest next action is to preserve state and monitor for meaningful change.",
           evidence: state.worldModel.activeSignals.slice(0, 4),
-          expectedOutcome: "Detect material changes without generating unnecessary actions or model calls.",
+          expectedOutcome:
+            "Detect material changes without generating unnecessary actions or model calls.",
           risk: 0.03,
           confidence: Math.max(0.7, reflection.confidence),
           requiresApproval: false,
@@ -380,7 +393,10 @@ export class AutonomyPlanner {
     this.expire();
     const key = cleanText(sessionKey, "global", 300);
     return (this.proposalsBySession.get(key) ?? [])
-      .filter((proposal) => includeClosed || proposal.status === "proposed" || proposal.status === "approved")
+      .filter(
+        (proposal) =>
+          includeClosed || proposal.status === "proposed" || proposal.status === "approved",
+      )
       .map((proposal) => structuredClone(proposal));
   }
 
@@ -394,7 +410,8 @@ export class AutonomyPlanner {
     if (proposal.status !== "proposed" && proposal.status !== "approved") {
       throw new Error(`Proposal ${proposalId} cannot be changed from status ${proposal.status}`);
     }
-    proposal.status = decision === "approve" ? "approved" : decision === "reject" ? "rejected" : "cancelled";
+    proposal.status =
+      decision === "approve" ? "approved" : decision === "reject" ? "rejected" : "cancelled";
     proposal.decisionNote = note ? cleanText(note, "", 1_000) : undefined;
     proposal.updatedAt = Date.now();
     this.dirty = true;
@@ -465,7 +482,9 @@ export class AutonomyPlanner {
     const payload: PersistedProposalState = {
       version: 1,
       savedAt: Date.now(),
-      proposals: [...this.proposalsBySession.values()].flat().map((proposal) => structuredClone(proposal)),
+      proposals: [...this.proposalsBySession.values()]
+        .flat()
+        .map((proposal) => structuredClone(proposal)),
     };
     await mkdir(dirname(this.storagePath), { recursive: true });
     const temporaryPath = `${this.storagePath}.${process.pid}.${Date.now()}.tmp`;
@@ -489,7 +508,9 @@ export class AutonomyPlanner {
 
   private requireProposal(sessionKey: string | undefined, proposalId: string): ActionProposal {
     const key = cleanText(sessionKey, "global", 300);
-    const proposal = (this.proposalsBySession.get(key) ?? []).find((item) => item.id === proposalId);
+    const proposal = (this.proposalsBySession.get(key) ?? []).find(
+      (item) => item.id === proposalId,
+    );
     if (!proposal) {
       throw new Error(`Proposal not found: ${proposalId}`);
     }
@@ -523,7 +544,11 @@ export class AutonomyPlanner {
         return;
       }
       for (const proposal of parsed.proposals) {
-        if (!proposal || typeof proposal.sessionKey !== "string" || typeof proposal.id !== "string") {
+        if (
+          !proposal ||
+          typeof proposal.sessionKey !== "string" ||
+          typeof proposal.id !== "string"
+        ) {
           continue;
         }
         const existing = this.proposalsBySession.get(proposal.sessionKey) ?? [];
@@ -531,7 +556,7 @@ export class AutonomyPlanner {
         this.proposalsBySession.set(
           proposal.sessionKey,
           existing
-            .sort((left, right) => right.createdAt - left.createdAt)
+            .toSorted((left, right) => right.createdAt - left.createdAt)
             .slice(0, this.config.maxProposalsPerSession),
         );
       }

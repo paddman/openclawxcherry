@@ -1,14 +1,8 @@
 import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
 import { createAdvancedCognitiveToolFactories } from "./src/advanced-tools.js";
-import {
-  AttentionSchemaEngine,
-  parseAttentionSchemaConfig,
-} from "./src/attention-schema.js";
+import { AttentionSchemaEngine, parseAttentionSchemaConfig } from "./src/attention-schema.js";
 import { AutonomyPlanner, parseAutonomyConfig } from "./src/autonomy.js";
-import {
-  MemoryConsolidator,
-  parseConsolidationConfig,
-} from "./src/consolidation.js";
+import { MemoryConsolidator, parseConsolidationConfig } from "./src/consolidation.js";
 import { AdaptiveLearningEngine, parseLearningConfig } from "./src/learning.js";
 import { ToolPolicyEngine, parseToolPolicyConfig } from "./src/policy.js";
 import { PredictionEngine, parsePredictionConfig } from "./src/prediction.js";

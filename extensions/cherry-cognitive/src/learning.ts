@@ -1,5 +1,6 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { sanitizeControlCharacters } from "./text-sanitize.js";
 import type { Observation, ObservationInput } from "./types.js";
 
 export type LearningConfig = {
@@ -77,7 +78,7 @@ function cleanText(value: unknown, fallback: string, maxLength = 500): string {
   if (typeof value !== "string") {
     return fallback;
   }
-  const cleaned = value.replace(/[\u0000-\u001f\u007f]/gu, " ").replace(/\s+/gu, " ").trim();
+  const cleaned = sanitizeControlCharacters(value).replace(/\s+/gu, " ").trim();
   return cleaned ? cleaned.slice(0, maxLength) : fallback;
 }
 
@@ -109,12 +110,7 @@ export function parseLearningConfig(
     minimumSamples: Math.round(
       numberValue(source.minimumSamples, DEFAULT_CONFIG.minimumSamples, 1, 1_000),
     ),
-    confidenceFloor: numberValue(
-      source.confidenceFloor,
-      DEFAULT_CONFIG.confidenceFloor,
-      0,
-      1,
-    ),
+    confidenceFloor: numberValue(source.confidenceFloor, DEFAULT_CONFIG.confidenceFloor, 0, 1),
     confidenceCeiling: numberValue(
       source.confidenceCeiling,
       DEFAULT_CONFIG.confidenceCeiling,
@@ -122,12 +118,7 @@ export function parseLearningConfig(
       1,
     ),
     maxProfilesPerSession: Math.round(
-      numberValue(
-        source.maxProfilesPerSession,
-        DEFAULT_CONFIG.maxProfilesPerSession,
-        8,
-        10_000,
-      ),
+      numberValue(source.maxProfilesPerSession, DEFAULT_CONFIG.maxProfilesPerSession, 8, 10_000),
     ),
     persistIntervalMs: Math.round(
       numberValue(source.persistIntervalMs, DEFAULT_CONFIG.persistIntervalMs, 5_000, 600_000),
@@ -205,11 +196,9 @@ export class AdaptiveLearningEngine {
       ...input,
       confidence: calibratedConfidence,
       salience:
-        input.salience === undefined
-          ? undefined
-          : clamp01(input.salience + reliabilityBoost),
+        input.salience === undefined ? undefined : clamp01(input.salience + reliabilityBoost),
       data: {
-        ...(input.data ?? {}),
+        ...input.data,
         cognitiveCalibration: {
           sourceReliability: profile.calibratedReliability,
           sourceSamples: profile.observations,
@@ -354,14 +343,15 @@ export class AdaptiveLearningEngine {
       sessionKey: session,
       sources: [...this.sourceProfiles.values()]
         .filter((profile) => profile.sessionKey === session)
-        .sort((left, right) =>
-          right.observations - left.observations ||
-          right.calibratedReliability - left.calibratedReliability,
+        .toSorted(
+          (left, right) =>
+            right.observations - left.observations ||
+            right.calibratedReliability - left.calibratedReliability,
         )
         .map((profile) => structuredClone(profile)),
       tools: [...this.toolProfiles.values()]
         .filter((profile) => profile.sessionKey === session)
-        .sort((left, right) => right.calls - left.calls || right.successRate - left.successRate)
+        .toSorted((left, right) => right.calls - left.calls || right.successRate - left.successRate)
         .map((profile) => structuredClone(profile)),
       generatedAt: Date.now(),
     };
@@ -372,8 +362,7 @@ export class AdaptiveLearningEngine {
     const unreliableSources = snapshot.sources
       .filter(
         (profile) =>
-          profile.observations >= this.config.minimumSamples &&
-          profile.calibratedReliability < 0.5,
+          profile.observations >= this.config.minimumSamples && profile.calibratedReliability < 0.5,
       )
       .slice(0, 4);
     const unstableTools = snapshot.tools
@@ -410,9 +399,7 @@ export class AdaptiveLearningEngine {
     return {
       sourceProfiles: sources.length,
       toolProfiles: tools.length,
-      averageSourceReliability: average(
-        sources.map((profile) => profile.calibratedReliability),
-      ),
+      averageSourceReliability: average(sources.map((profile) => profile.calibratedReliability)),
       averageToolSuccessRate: average(tools.map((profile) => profile.successRate)),
     };
   }
@@ -440,7 +427,7 @@ export class AdaptiveLearningEngine {
   private trimSources(session: string): void {
     const profiles = [...this.sourceProfiles.values()]
       .filter((profile) => profile.sessionKey === session)
-      .sort((left, right) => right.lastSeenAt - left.lastSeenAt);
+      .toSorted((left, right) => right.lastSeenAt - left.lastSeenAt);
     for (const profile of profiles.slice(this.config.maxProfilesPerSession)) {
       this.sourceProfiles.delete(profile.key);
     }
@@ -449,7 +436,7 @@ export class AdaptiveLearningEngine {
   private trimTools(session: string): void {
     const profiles = [...this.toolProfiles.values()]
       .filter((profile) => profile.sessionKey === session)
-      .sort((left, right) => right.lastSeenAt - left.lastSeenAt);
+      .toSorted((left, right) => right.lastSeenAt - left.lastSeenAt);
     for (const profile of profiles.slice(this.config.maxProfilesPerSession)) {
       this.toolProfiles.delete(profile.key);
     }

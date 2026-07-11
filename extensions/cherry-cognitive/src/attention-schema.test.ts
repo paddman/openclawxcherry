@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  AttentionSchemaEngine,
-  parseAttentionSchemaConfig,
-} from "./attention-schema.js";
+import { AttentionSchemaEngine, parseAttentionSchemaConfig } from "./attention-schema.js";
 import { parseCognitiveConfig } from "./runtime.js";
 import { TrackedCognitiveRuntime } from "./tracked-runtime.js";
 

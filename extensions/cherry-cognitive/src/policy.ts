@@ -147,7 +147,8 @@ export function parseToolPolicyConfig(
   pluginConfig: Record<string, unknown> | undefined,
 ): ToolPolicyConfig {
   const source = nestedObject(pluginConfig, "policy");
-  const mode = source.mode === "monitor" || source.mode === "enforce" ? source.mode : DEFAULT_CONFIG.mode;
+  const mode =
+    source.mode === "monitor" || source.mode === "enforce" ? source.mode : DEFAULT_CONFIG.mode;
   return {
     enabled: booleanValue(source.enabled, DEFAULT_CONFIG.enabled),
     mode,
@@ -210,7 +211,6 @@ function riskFromCognitiveLevel(level: CognitiveRiskLevel | undefined): number {
       return 0.2;
     case "medium":
       return 0.08;
-    case "low":
     default:
       return 0;
   }
@@ -281,9 +281,7 @@ export class ToolPolicyEngine {
 
     const readOnlyHint = this.config.readOnlyTools.some(
       (prefix) =>
-        toolName === prefix ||
-        toolName.startsWith(`${prefix}_`) ||
-        toolName.includes(`_${prefix}`),
+        toolName === prefix || toolName.startsWith(`${prefix}_`) || toolName.includes(`_${prefix}`),
     );
     if (readOnlyHint) {
       matchedSignals.push("read-only-hint");
@@ -296,13 +294,8 @@ export class ToolPolicyEngine {
 
     let risk = riskFromCognitiveLevel(input.cognitiveRiskLevel);
     risk +=
-      destructiveMatches.length > 0
-        ? Math.min(0.68, 0.42 + destructiveMatches.length * 0.08)
-        : 0;
-    risk +=
-      sensitiveMatches.length > 0
-        ? Math.min(0.28, 0.12 + sensitiveMatches.length * 0.04)
-        : 0;
+      destructiveMatches.length > 0 ? Math.min(0.68, 0.42 + destructiveMatches.length * 0.08) : 0;
+    risk += sensitiveMatches.length > 0 ? Math.min(0.28, 0.12 + sensitiveMatches.length * 0.04) : 0;
     risk += exactMatch(this.config.approvalTools, toolName) ? 0.58 : 0;
     risk += exactMatch(this.config.blockedTools, toolName) ? 1 : 0;
     risk += serialized.length > this.config.maxSerializedParamChars ? 0.3 : 0;

@@ -1,22 +1,12 @@
 import { CherryCognitiveRuntime } from "./runtime.js";
-import type {
-  CognitiveConfig,
-  Goal,
-  GoalStatus,
-  Observation,
-  ObservationInput,
-  ReflectionReport,
-} from "./types.js";
+import type { Goal, GoalStatus, Observation, ObservationInput, ReflectionReport } from "./types.js";
 
 type ObservationCalibrator = (
   sessionKey: string | undefined,
   input: ObservationInput,
 ) => ObservationInput;
 
-type ObservationListener = (
-  sessionKey: string | undefined,
-  observation: Observation,
-) => void;
+type ObservationListener = (sessionKey: string | undefined, observation: Observation) => void;
 
 type ToolOutcomeListener = (event: {
   sessionKey: string | undefined;
@@ -32,12 +22,8 @@ export class TrackedCognitiveRuntime extends CherryCognitiveRuntime {
   private readonly toolOutcomeListeners = new Set<ToolOutcomeListener>();
   private observationCalibrator?: ObservationCalibrator;
 
-  constructor(config: CognitiveConfig) {
-    super(config);
-  }
-
   listSessionKeys(): string[] {
-    return [...this.knownSessionKeys].sort((left, right) => left.localeCompare(right));
+    return [...this.knownSessionKeys].toSorted((left, right) => left.localeCompare(right));
   }
 
   setObservationCalibrator(calibrator: ObservationCalibrator | undefined): void {
@@ -136,7 +122,9 @@ export class TrackedCognitiveRuntime extends CherryCognitiveRuntime {
     return super.listGoals(sessionKey);
   }
 
-  override snapshot(sessionKey: string | undefined): ReturnType<CherryCognitiveRuntime["snapshot"]> {
+  override snapshot(
+    sessionKey: string | undefined,
+  ): ReturnType<CherryCognitiveRuntime["snapshot"]> {
     this.touch(sessionKey);
     return super.snapshot(sessionKey);
   }

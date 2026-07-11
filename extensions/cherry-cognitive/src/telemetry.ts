@@ -102,29 +102,16 @@ export function buildCognitiveHealth(
       trackedSessions: policyState.trackedSessions,
     },
     aggregate: {
-      observations: snapshots.reduce(
-        (sum, snapshot) => sum + snapshot.workingMemory.length,
-        0,
-      ),
-      episodes: snapshots.reduce(
-        (sum, snapshot) => sum + snapshot.episodicMemory.length,
-        0,
-      ),
+      observations: snapshots.reduce((sum, snapshot) => sum + snapshot.workingMemory.length, 0),
+      episodes: snapshots.reduce((sum, snapshot) => sum + snapshot.episodicMemory.length, 0),
       goals: snapshots.reduce((sum, snapshot) => sum + snapshot.goals.length, 0),
       activeGoals: snapshots.reduce(
-        (sum, snapshot) =>
-          sum + snapshot.goals.filter((goal) => goal.status === "active").length,
+        (sum, snapshot) => sum + snapshot.goals.filter((goal) => goal.status === "active").length,
         0,
       ),
-      averageConfidence: average(
-        snapshots.map((snapshot) => snapshot.selfModel.confidence),
-      ),
-      averageUncertainty: average(
-        snapshots.map((snapshot) => snapshot.selfModel.uncertainty),
-      ),
-      averageActivation: average(
-        snapshots.map((snapshot) => snapshot.fieldSnapshot.activation),
-      ),
+      averageConfidence: average(snapshots.map((snapshot) => snapshot.selfModel.confidence)),
+      averageUncertainty: average(snapshots.map((snapshot) => snapshot.selfModel.uncertainty)),
+      averageActivation: average(snapshots.map((snapshot) => snapshot.fieldSnapshot.activation)),
       maximumRisk,
     },
   };
@@ -142,7 +129,9 @@ export function renderPrometheusMetrics(snapshot: CognitiveHealthSnapshot): stri
     "# TYPE openclaw_cherry_cognitive_sessions gauge",
     metricLine("openclaw_cherry_cognitive_sessions", snapshot.sessions.total, { state: "total" }),
     metricLine("openclaw_cherry_cognitive_sessions", snapshot.sessions.active, { state: "active" }),
-    metricLine("openclaw_cherry_cognitive_sessions", snapshot.sessions.highRisk, { state: "high_risk" }),
+    metricLine("openclaw_cherry_cognitive_sessions", snapshot.sessions.highRisk, {
+      state: "high_risk",
+    }),
     metricLine("openclaw_cherry_cognitive_sessions", snapshot.sessions.criticalRisk, {
       state: "critical_risk",
     }),
@@ -151,7 +140,9 @@ export function renderPrometheusMetrics(snapshot: CognitiveHealthSnapshot): stri
     metricLine("openclaw_cherry_cognitive_items", snapshot.aggregate.observations, {
       kind: "observations",
     }),
-    metricLine("openclaw_cherry_cognitive_items", snapshot.aggregate.episodes, { kind: "episodes" }),
+    metricLine("openclaw_cherry_cognitive_items", snapshot.aggregate.episodes, {
+      kind: "episodes",
+    }),
     metricLine("openclaw_cherry_cognitive_items", snapshot.aggregate.goals, { kind: "goals" }),
     metricLine("openclaw_cherry_cognitive_items", snapshot.aggregate.activeGoals, {
       kind: "active_goals",
@@ -191,14 +182,10 @@ export function renderPrometheusMetrics(snapshot: CognitiveHealthSnapshot): stri
   ];
 
   for (const [status, count] of Object.entries(snapshot.autonomy.byStatus)) {
-    lines.push(
-      metricLine("openclaw_cherry_cognitive_autonomy_proposals", count, { status }),
-    );
+    lines.push(metricLine("openclaw_cherry_cognitive_autonomy_proposals", count, { status }));
   }
   for (const [category, count] of Object.entries(snapshot.memory.byCategory)) {
-    lines.push(
-      metricLine("openclaw_cherry_cognitive_semantic_memories", count, { category }),
-    );
+    lines.push(metricLine("openclaw_cherry_cognitive_semantic_memories", count, { category }));
   }
 
   return `${lines.join("\n")}\n`;

@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { sanitizeControlCharacters } from "./text-sanitize.js";
 import type { Episode, SessionCognitiveState } from "./types.js";
 
 export type SemanticMemoryCategory =
@@ -62,7 +63,7 @@ function cleanText(value: unknown, fallback = "", maxLength = 1_200): string {
   if (typeof value !== "string") {
     return fallback;
   }
-  const cleaned = value.replace(/[\u0000-\u001f\u007f]/gu, " ").replace(/\s+/gu, " ").trim();
+  const cleaned = sanitizeControlCharacters(value).replace(/\s+/gu, " ").trim();
   return cleaned ? cleaned.slice(0, maxLength) : fallback;
 }
 
@@ -148,10 +149,16 @@ function categoryForEpisode(episode: Episode): SemanticMemoryCategory {
   if (episode.kind === "goal") {
     return "goal_context";
   }
-  if (episode.success === false || /failed|error|timeout|denied|rejected|ผิดพลาด|ล้มเหลว/u.test(episode.summary.toLocaleLowerCase())) {
+  if (
+    episode.success === false ||
+    /failed|error|timeout|denied|rejected|ผิดพลาด|ล้มเหลว/u.test(episode.summary.toLocaleLowerCase())
+  ) {
     return "failure_pattern";
   }
-  if (episode.success === true || /completed|success|resolved|healthy|สำเร็จ|เรียบร้อย/u.test(episode.summary.toLocaleLowerCase())) {
+  if (
+    episode.success === true ||
+    /completed|success|resolved|healthy|สำเร็จ|เรียบร้อย/u.test(episode.summary.toLocaleLowerCase())
+  ) {
     return "success_pattern";
   }
   if (episode.kind === "reflection") {
@@ -178,7 +185,6 @@ function statementForEpisode(episode: Episode): string {
       return `Operational event: ${summary}`;
     case "source_profile":
       return `Source profile: ${summary}`;
-    case "fact":
     default:
       return `Observed fact: ${summary}`;
   }
@@ -265,10 +271,15 @@ export class MemoryConsolidator {
       if (existing) {
         existing.updatedAt = Date.now();
         existing.reinforcement += 1;
-        existing.confidence = clamp01((existing.confidence * 0.7 + confidence * 0.3));
+        existing.confidence = clamp01(existing.confidence * 0.7 + confidence * 0.3);
         existing.importance = Math.max(existing.importance, episodeImportance(episode));
-        existing.sourceEpisodeIds = [...new Set([...existing.sourceEpisodeIds, episode.id])].slice(-32);
-        existing.tags = [...new Set([...existing.tags, ...this.tagsForEpisode(episode)])].slice(0, 24);
+        existing.sourceEpisodeIds = [...new Set([...existing.sourceEpisodeIds, episode.id])].slice(
+          -32,
+        );
+        existing.tags = [...new Set([...existing.tags, ...this.tagsForEpisode(episode)])].slice(
+          0,
+          24,
+        );
         createdOrUpdated.push(structuredClone(existing));
         this.dirty = true;
         continue;
@@ -313,12 +324,17 @@ export class MemoryConsolidator {
     const results = memories
       .filter((memory) => !categories || categories.includes(memory.category))
       .map((memory) => {
-        const semanticSimilarity = normalizedQuery ? similarity(normalizedQuery, memory.statement) : 0.5;
+        const semanticSimilarity = normalizedQuery
+          ? similarity(normalizedQuery, memory.statement)
+          : 0.5;
         const score = clamp01(memoryScore(memory) * 0.62 + semanticSimilarity * 0.38);
-        return { ...structuredClone(memory), score, similarity: semanticSimilarity };
+        return Object.assign(structuredClone(memory), {
+          score,
+          similarity: semanticSimilarity,
+        });
       })
       .filter((memory) => !normalizedQuery || memory.similarity > 0 || memory.score >= 0.62)
-      .sort((left, right) => right.score - left.score)
+      .toSorted((left, right) => right.score - left.score)
       .slice(0, Math.min(50, Math.max(1, Math.round(limit))));
 
     const now = Date.now();
@@ -392,7 +408,9 @@ export class MemoryConsolidator {
     const payload: PersistedSemanticState = {
       version: 1,
       savedAt: Date.now(),
-      memories: [...this.memoriesBySession.values()].flat().map((memory) => structuredClone(memory)),
+      memories: [...this.memoriesBySession.values()]
+        .flat()
+        .map((memory) => structuredClone(memory)),
     };
     await mkdir(dirname(this.storagePath), { recursive: true });
     const temporaryPath = `${this.storagePath}.${process.pid}.${Date.now()}.tmp`;
@@ -420,7 +438,7 @@ export class MemoryConsolidator {
   }
 
   private tagsForEpisode(episode: Episode): string[] {
-    const tags = [episode.kind, categoryForEpisode(episode)];
+    const tags: string[] = [episode.kind, categoryForEpisode(episode)];
     if (episode.relatedGoalId) {
       tags.push(`goal:${episode.relatedGoalId}`);
     }
@@ -438,7 +456,7 @@ export class MemoryConsolidator {
     this.memoriesBySession.set(
       sessionKey,
       memories
-        .sort((left, right) => memoryScore(right) - memoryScore(left))
+        .toSorted((left, right) => memoryScore(right) - memoryScore(left))
         .slice(0, this.config.maxSemanticMemoriesPerSession),
     );
     this.dirty = true;

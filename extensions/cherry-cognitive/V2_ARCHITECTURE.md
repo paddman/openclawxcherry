@@ -247,13 +247,7 @@ The system creates proposals, but tool execution remains a normal OpenClaw decis
   "autonomy": {
     "mode": "guarded",
     "diagnosticOnly": true,
-    "allowedTools": [
-      "status",
-      "search",
-      "inspect",
-      "query",
-      "fetch"
-    ]
+    "allowedTools": ["status", "search", "inspect", "query", "fetch"]
   },
   "policy": {
     "mode": "enforce",

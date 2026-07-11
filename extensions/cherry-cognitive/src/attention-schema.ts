@@ -1,8 +1,4 @@
-import type {
-  Observation,
-  SessionCognitiveState,
-  WorkspaceItem,
-} from "./types.js";
+import type { Observation, SessionCognitiveState, WorkspaceItem } from "./types.js";
 
 export type CognitiveMode = "idle" | "monitoring" | "deliberative" | "reflex";
 
@@ -46,6 +42,8 @@ export type AttentionSchemaConfig = {
   reflexRiskThreshold: number;
   deliberativeUncertaintyThreshold: number;
 };
+
+type AttentionState = SessionCognitiveState & { fieldSnapshot: NcaFieldSnapshot };
 
 type EnrichedWorkspaceItem = {
   workspace: WorkspaceItem;
@@ -113,7 +111,7 @@ export function parseAttentionSchemaConfig(
   };
 }
 
-function enrichWorkspace(state: SessionCognitiveState): EnrichedWorkspaceItem[] {
+function enrichWorkspace(state: AttentionState): EnrichedWorkspaceItem[] {
   const observationsById = new Map(
     state.workingMemory.map((observation) => [observation.id, observation] as const),
   );
@@ -147,7 +145,7 @@ function selectionReason(item: EnrichedWorkspaceItem): string {
     { name: "novelty", value: item.novelty },
     { name: "uncertainty", value: item.uncertainty },
     { name: "confidence", value: item.workspace.confidence },
-  ].sort((left, right) => right.value - left.value);
+  ].toSorted((left, right) => right.value - left.value);
   return `${factors[0]?.name ?? "combined score"}=${(factors[0]?.value ?? 0).toFixed(2)}; ${factors[1]?.name ?? "context"}=${(factors[1]?.value ?? 0).toFixed(2)}`;
 }
 
@@ -172,10 +170,7 @@ function toContender(
   };
 }
 
-function cognitiveMode(
-  state: SessionCognitiveState,
-  config: AttentionSchemaConfig,
-): CognitiveMode {
+function cognitiveMode(state: AttentionState, config: AttentionSchemaConfig): CognitiveMode {
   const top = state.workspace[0];
   if (!top && state.goals.every((goal) => goal.status !== "active")) {
     return "idle";
@@ -210,10 +205,7 @@ function switchingPressure(contenders: AttentionContender[]): number {
   return clamp01(closeCompetitors / Math.max(1, contenders.length - 1));
 }
 
-function tunnelVisionRisk(
-  contenders: AttentionContender[],
-  state: SessionCognitiveState,
-): number {
+function tunnelVisionRisk(contenders: AttentionContender[], state: AttentionState): number {
   if (contenders.length === 0) {
     return 0;
   }
@@ -231,9 +223,7 @@ function tunnelVisionRisk(
           ),
         );
   const lowDiversity =
-    (sourceCount <= 1 ? 0.38 : 0) +
-    (modalityCount <= 1 ? 0.28 : 0) +
-    dominantShare * 0.2;
+    (sourceCount <= 1 ? 0.38 : 0) + (modalityCount <= 1 ? 0.28 : 0) + dominantShare * 0.2;
   const persistence =
     state.fieldSnapshot.activation > 0.8 && switchingPressure(contenders) < 0.2 ? 0.14 : 0;
   return clamp01(lowDiversity + persistence);
@@ -243,7 +233,7 @@ function recommendations(
   mode: CognitiveMode,
   contenders: AttentionContender[],
   tunnelRisk: number,
-  state: SessionCognitiveState,
+  state: AttentionState,
 ): string[] {
   const result: string[] = [];
   if (mode === "reflex") {
@@ -265,13 +255,17 @@ function recommendations(
     );
   }
   if (state.selfModel.confidence < 0.5) {
-    result.push("State uncertainty explicitly and avoid presenting a single explanation as settled.");
+    result.push(
+      "State uncertainty explicitly and avoid presenting a single explanation as settled.",
+    );
   }
   if (state.goals.filter((goal) => goal.status === "active").length > 3) {
     result.push("Pause or rank lower-priority goals to reduce goal competition.");
   }
   if (result.length === 0) {
-    result.push("Maintain current focus and monitor for materially higher-risk or more novel signals.");
+    result.push(
+      "Maintain current focus and monitor for materially higher-risk or more novel signals.",
+    );
   }
   return result;
 }
@@ -283,10 +277,10 @@ export class AttentionSchemaEngine {
     this.config = config;
   }
 
-  inspect(state: SessionCognitiveState): AttentionSchema {
+  inspect(state: AttentionState): AttentionSchema {
     const sorted = enrichWorkspace(state)
       .map((item) => ({ item, score: contenderScore(item) }))
-      .sort((left, right) => right.score - left.score)
+      .toSorted((left, right) => right.score - left.score)
       .map(({ item }, index) => toContender(item, index + 1, this.config.capacity));
     const contenders = sorted.slice(0, this.config.contenderLimit);
     const suppressedSignals = sorted
@@ -325,16 +319,18 @@ export class AttentionSchemaEngine {
     };
   }
 
-  buildPromptContext(state: SessionCognitiveState): string {
+  buildPromptContext(state: AttentionState): string {
     const schema = this.inspect(state);
     return [
       "[Cherry Attention Schema]",
       `Mode=${schema.mode}; capacity=${schema.occupiedSlots}/${schema.capacity}; stability=${schema.stability.toFixed(2)}; switchingPressure=${schema.switchingPressure.toFixed(2)}; tunnelVisionRisk=${schema.tunnelVisionRisk.toFixed(2)}.`,
       `Selection: ${schema.selectionExplanation}`,
-      ...schema.contenders.slice(0, schema.capacity).map(
-        (item) =>
-          `- focus#${item.rank}: ${item.summary} | score=${item.score.toFixed(2)} | ${item.selectionReason}`,
-      ),
+      ...schema.contenders
+        .slice(0, schema.capacity)
+        .map(
+          (item) =>
+            `- focus#${item.rank}: ${item.summary} | score=${item.score.toFixed(2)} | ${item.selectionReason}`,
+        ),
       ...schema.recommendedControl.map((item) => `- control: ${item}`),
       "This schema is an operational model of attention, not evidence of subjective experience.",
       "[/Cherry Attention Schema]",

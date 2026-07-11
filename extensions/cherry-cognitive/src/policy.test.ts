@@ -42,9 +42,7 @@ describe("ToolPolicyEngine", () => {
 
     expect(decision.action).toBe("approval");
     expect(decision.risk).toBeGreaterThanOrEqual(engine.config.approvalRiskThreshold);
-    expect(decision.matchedSignals.some((signal) => signal.startsWith("destructive:"))).toBe(
-      true,
-    );
+    expect(decision.matchedSignals.some((signal) => signal.startsWith("destructive:"))).toBe(true);
   });
 
   it("blocks an explicitly blocked tool", () => {

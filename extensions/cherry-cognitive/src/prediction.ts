@@ -1,14 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { sanitizeControlCharacters } from "./text-sanitize.js";
 import type { Observation } from "./types.js";
 
-export type PredictionStatus =
-  | "pending"
-  | "confirmed"
-  | "refuted"
-  | "expired"
-  | "cancelled";
+export type PredictionStatus = "pending" | "confirmed" | "refuted" | "expired" | "cancelled";
 
 export type PredictionConfig = {
   enabled: boolean;
@@ -78,10 +74,7 @@ function cleanText(value: unknown, fallback: string, maxLength = 1_200): string 
   if (typeof value !== "string") {
     return fallback;
   }
-  const cleaned = value
-    .replace(/[\u0000-\u001f\u007f]/gu, " ")
-    .replace(/\s+/gu, " ")
-    .trim();
+  const cleaned = sanitizeControlCharacters(value).replace(/\s+/gu, " ").trim();
   return cleaned ? cleaned.slice(0, maxLength) : fallback;
 }
 
@@ -111,7 +104,12 @@ export function parsePredictionConfig(
     enabled: booleanValue(source.enabled, DEFAULT_CONFIG.enabled),
     autoEvaluate: booleanValue(source.autoEvaluate, DEFAULT_CONFIG.autoEvaluate),
     defaultHorizonMs: Math.round(
-      numberValue(source.defaultHorizonMs, DEFAULT_CONFIG.defaultHorizonMs, 10_000, 30 * 24 * 60 * 60 * 1_000),
+      numberValue(
+        source.defaultHorizonMs,
+        DEFAULT_CONFIG.defaultHorizonMs,
+        10_000,
+        30 * 24 * 60 * 60 * 1_000,
+      ),
     ),
     maxPredictionsPerSession: Math.round(
       numberValue(
@@ -260,7 +258,7 @@ export class PredictionEngine {
     this.predictionsBySession.set(
       key,
       predictions
-        .sort((left, right) => right.createdAt - left.createdAt)
+        .toSorted((left, right) => right.createdAt - left.createdAt)
         .slice(0, this.config.maxPredictionsPerSession),
     );
     this.dirty = true;
@@ -287,8 +285,7 @@ export class PredictionEngine {
       const sourceMatch = prediction.sourceExpectation
         ? semanticSimilarity(prediction.sourceExpectation, observation.source ?? "")
         : 0.5;
-      const combined =
-        signalSimilarity * 0.58 + hypothesisSimilarity * 0.27 + sourceMatch * 0.15;
+      const combined = signalSimilarity * 0.58 + hypothesisSimilarity * 0.27 + sourceMatch * 0.15;
       if (combined < this.config.confirmationSimilarity) {
         continue;
       }
@@ -314,7 +311,9 @@ export class PredictionEngine {
   ): PredictionRecord {
     const prediction = this.requirePrediction(inputSessionKey, predictionId);
     if (prediction.status !== "pending") {
-      throw new Error(`Prediction ${predictionId} cannot be resolved from status ${prediction.status}`);
+      throw new Error(
+        `Prediction ${predictionId} cannot be resolved from status ${prediction.status}`,
+      );
     }
     const now = Date.now();
     prediction.status =
@@ -331,7 +330,10 @@ export class PredictionEngine {
       .filter(Boolean)
       .slice(0, 16);
     if (outcome !== "cancel") {
-      prediction.probabilityScore = brierScore(prediction.confidence, outcome === "confirm" ? 1 : 0);
+      prediction.probabilityScore = brierScore(
+        prediction.confidence,
+        outcome === "confirm" ? 1 : 0,
+      );
     }
     this.dirty = true;
     return structuredClone(prediction);
@@ -376,8 +378,7 @@ export class PredictionEngine {
     stats.meanBrierScore =
       scored.length === 0
         ? 0
-        : scored.reduce((sum, record) => sum + (record.probabilityScore ?? 0), 0) /
-          scored.length;
+        : scored.reduce((sum, record) => sum + (record.probabilityScore ?? 0), 0) / scored.length;
     return stats;
   }
 
@@ -471,7 +472,7 @@ export class PredictionEngine {
         this.predictionsBySession.set(
           prediction.sessionKey,
           records
-            .sort((left, right) => right.createdAt - left.createdAt)
+            .toSorted((left, right) => right.createdAt - left.createdAt)
             .slice(0, this.config.maxPredictionsPerSession),
         );
       }

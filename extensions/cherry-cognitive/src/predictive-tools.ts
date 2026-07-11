@@ -58,7 +58,10 @@ function optionalStringArray(params: Record<string, unknown>, name: string): str
   if (!Array.isArray(value) || !value.every((item) => typeof item === "string")) {
     throw new Error(`${name} must be an array of strings`);
   }
-  return value.map((item) => item.trim()).filter(Boolean).slice(0, 24);
+  return value
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .slice(0, 24);
 }
 
 function result(details: Record<string, unknown>) {

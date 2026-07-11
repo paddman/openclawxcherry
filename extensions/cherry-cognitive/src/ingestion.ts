@@ -1,3 +1,4 @@
+import { sanitizeControlCharacters } from "./text-sanitize.js";
 import type { CognitiveModality, ObservationInput } from "./types.js";
 
 export type IngestionKind =
@@ -24,7 +25,7 @@ function cleanText(value: unknown, fallback = "", maxLength = MAX_STRING): strin
   if (typeof value !== "string") {
     return fallback;
   }
-  return value.replace(/[\u0000-\u001f\u007f]/gu, " ").replace(/\s+/gu, " ").trim().slice(0, maxLength);
+  return sanitizeControlCharacters(value).replace(/\s+/gu, " ").trim().slice(0, maxLength);
 }
 
 function cleanNumber(value: unknown): number | undefined {
@@ -141,7 +142,12 @@ function normalizePrometheus(envelope: IngestionEnvelope): ObservationInput[] {
         "sensor",
         `${alertName} [${status}/${severity}]: ${description}`,
         envelope.source ?? cleanText(labels.instance ?? labels.job, "prometheus", 200),
-        { status, severity, labels: compactObject(labels), annotations: compactObject(annotations) },
+        {
+          status,
+          severity,
+          labels: compactObject(labels),
+          annotations: compactObject(annotations),
+        },
         tuning.salience,
         tuning.confidence,
       ),
@@ -154,10 +160,7 @@ function normalizePrometheus(envelope: IngestionEnvelope): ObservationInput[] {
     const alertName = cleanText(labels.alertname, `Prometheus alert ${index + 1}`, 200);
     const status = cleanText(alert.status ?? payload.status, "unknown", 50);
     const severity = cleanText(labels.severity, status, 50);
-    const description = cleanText(
-      annotations.description ?? annotations.summary,
-      "No description",
-    );
+    const description = cleanText(annotations.description ?? annotations.summary, "No description");
     const tuning = severityConfidence(severity);
     return genericObservation(
       "sensor",
@@ -181,7 +184,11 @@ function normalizeSyslog(envelope: IngestionEnvelope): ObservationInput[] {
   const payload = envelope.payload;
   const severity = cleanText(payload.severity ?? payload.level ?? payload.priority, "info", 50);
   const facility = cleanText(payload.facility, "unknown", 80);
-  const host = cleanText(payload.hostname ?? payload.host ?? payload.device, envelope.source ?? "syslog", 200);
+  const host = cleanText(
+    payload.hostname ?? payload.host ?? payload.device,
+    envelope.source ?? "syslog",
+    200,
+  );
   const app = cleanText(payload.app ?? payload.program ?? payload.process, "unknown", 100);
   const message = cleanText(payload.message ?? payload.msg ?? payload.event, "Empty syslog event");
   const tuning = severityConfidence(severity);
@@ -208,12 +215,20 @@ function normalizeSyslog(envelope: IngestionEnvelope): ObservationInput[] {
 
 function normalizeVision(envelope: IngestionEnvelope): ObservationInput[] {
   const payload = envelope.payload;
-  const caption = cleanText(payload.caption ?? payload.summary ?? payload.description, "Visual event");
+  const caption = cleanText(
+    payload.caption ?? payload.summary ?? payload.description,
+    "Visual event",
+  );
   const objects = stringList(payload.objects ?? payload.labels ?? payload.detectedObjects);
   const events = stringList(payload.events ?? payload.activities);
   const confidence = cleanNumber(payload.confidence) ?? 0.74;
-  const alarm = cleanBoolean(payload.alarm) ?? events.some((event) => /alarm|fire|smoke|intrusion|fall/u.test(event.toLocaleLowerCase()));
-  const detail = [objects.length > 0 ? `objects=${objects.join(", ")}` : "", events.length > 0 ? `events=${events.join(", ")}` : ""]
+  const alarm =
+    cleanBoolean(payload.alarm) ??
+    events.some((event) => /alarm|fire|smoke|intrusion|fall/u.test(event.toLocaleLowerCase()));
+  const detail = [
+    objects.length > 0 ? `objects=${objects.join(", ")}` : "",
+    events.length > 0 ? `events=${events.join(", ")}` : "",
+  ]
     .filter(Boolean)
     .join("; ");
   return [
@@ -235,7 +250,10 @@ function normalizeVision(envelope: IngestionEnvelope): ObservationInput[] {
 
 function normalizeAudio(envelope: IngestionEnvelope): ObservationInput[] {
   const payload = envelope.payload;
-  const transcript = cleanText(payload.transcript ?? payload.text ?? payload.utterance, "Empty audio transcript");
+  const transcript = cleanText(
+    payload.transcript ?? payload.text ?? payload.utterance,
+    "Empty audio transcript",
+  );
   const speaker = cleanText(payload.speaker ?? payload.speakerId, "unknown", 100);
   const language = cleanText(payload.language ?? payload.locale, "unknown", 50);
   const confidence = cleanNumber(payload.confidence) ?? 0.72;
@@ -260,7 +278,8 @@ function normalizeAudio(envelope: IngestionEnvelope): ObservationInput[] {
 function normalizeSensor(envelope: IngestionEnvelope): ObservationInput[] {
   const payload = envelope.payload;
   const readings = asRecordArray(payload.readings ?? payload.metrics ?? payload.values);
-  const source = envelope.source ?? cleanText(payload.device ?? payload.sensor ?? payload.host, "sensor", 200);
+  const source =
+    envelope.source ?? cleanText(payload.device ?? payload.sensor ?? payload.host, "sensor", 200);
   if (readings.length === 0) {
     const name = cleanText(payload.name ?? payload.metric ?? payload.type, "sensor-value", 100);
     const value = cleanNumber(payload.value);
@@ -280,7 +299,11 @@ function normalizeSensor(envelope: IngestionEnvelope): ObservationInput[] {
   }
 
   return readings.map((reading, index) => {
-    const name = cleanText(reading.name ?? reading.metric ?? reading.type, `metric-${index + 1}`, 100);
+    const name = cleanText(
+      reading.name ?? reading.metric ?? reading.type,
+      `metric-${index + 1}`,
+      100,
+    );
     const value = cleanNumber(reading.value);
     const unit = cleanText(reading.unit, "", 30);
     const status = cleanText(reading.status ?? reading.state, "normal", 50);
@@ -308,7 +331,10 @@ function normalizeWebhook(envelope: IngestionEnvelope): ObservationInput[] {
   const payload = envelope.payload;
   const event = cleanText(payload.event ?? payload.type ?? payload.action, "webhook", 100);
   const title = cleanText(payload.title ?? payload.name ?? payload.subject, event, 200);
-  const description = cleanText(payload.description ?? payload.message ?? payload.summary, "No description");
+  const description = cleanText(
+    payload.description ?? payload.message ?? payload.summary,
+    "No description",
+  );
   const severity = cleanText(payload.severity ?? payload.level ?? payload.status, "info", 50);
   const tuning = severityConfidence(severity);
   return [
@@ -367,7 +393,6 @@ export function normalizeIngestion(envelope: IngestionEnvelope): ObservationInpu
       return normalizeSensor(envelope);
     case "webhook":
       return normalizeWebhook(envelope);
-    case "generic":
     default:
       return normalizeGeneric(envelope);
   }
