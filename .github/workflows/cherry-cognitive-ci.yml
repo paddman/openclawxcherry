@@ -72,6 +72,11 @@ jobs:
         continue-on-error: true
         run: git diff --exit-code -- extensions/cherry-cognitive
 
+      - name: Detect lockfile drift
+        id: lockfile-drift
+        continue-on-error: true
+        run: git diff --exit-code -- pnpm-lock.yaml
+
       - name: Upload validation artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -79,6 +84,7 @@ jobs:
           name: cherry-cognitive-validation
           path: |
             extensions/cherry-cognitive
+            pnpm-lock.yaml
             /tmp/cherry-lint.log
             /tmp/cherry-tests.log
           if-no-files-found: error
@@ -90,9 +96,10 @@ jobs:
           LINT_OUTCOME: ${{ steps.lint.outcome }}
           TEST_OUTCOME: ${{ steps.tests.outcome }}
           FORMAT_OUTCOME: ${{ steps['format-drift'].outcome }}
+          LOCKFILE_OUTCOME: ${{ steps['lockfile-drift'].outcome }}
         run: |
-          echo "lint=$LINT_OUTCOME tests=$TEST_OUTCOME format=$FORMAT_OUTCOME"
-          if [[ "$LINT_OUTCOME" != "success" || "$TEST_OUTCOME" != "success" || "$FORMAT_OUTCOME" != "success" ]]; then
-            echo "Cherry Cognitive validation failed. Download the cherry-cognitive-validation artifact for diagnostics."
+          echo "lint=$LINT_OUTCOME tests=$TEST_OUTCOME format=$FORMAT_OUTCOME lockfile=$LOCKFILE_OUTCOME"
+          if [[ "$LINT_OUTCOME" != "success" || "$TEST_OUTCOME" != "success" || "$FORMAT_OUTCOME" != "success" || "$LOCKFILE_OUTCOME" != "success" ]]; then
+            echo "Cherry Cognitive validation failed. Download the cherry-cognitive-validation artifact for diagnostics and generated files."
             exit 1
           fi
