@@ -42,37 +42,53 @@ jobs:
         run: pnpm exec oxfmt --write extensions/cherry-cognitive
 
       - name: Lint extension
-        run: pnpm exec oxlint --tsconfig config/tsconfig/oxlint.extensions.json extensions/cherry-cognitive
+        id: lint
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm exec oxlint --tsconfig config/tsconfig/oxlint.extensions.json extensions/cherry-cognitive 2>&1 | tee /tmp/cherry-lint.log
 
       - name: Run Cherry Cognitive unit tests
-        run: >-
-          pnpm test
-          extensions/cherry-cognitive/src/runtime.test.ts
-          extensions/cherry-cognitive/src/policy.test.ts
-          extensions/cherry-cognitive/src/ingestion.test.ts
-          extensions/cherry-cognitive/src/autonomy.test.ts
-          extensions/cherry-cognitive/src/consolidation.test.ts
-          extensions/cherry-cognitive/src/learning.test.ts
-          extensions/cherry-cognitive/src/prediction.test.ts
-          extensions/cherry-cognitive/src/attention-schema.test.ts
-          extensions/cherry-cognitive/src/telemetry.test.ts
+        id: tests
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm test \
+            extensions/cherry-cognitive/src/runtime.test.ts \
+            extensions/cherry-cognitive/src/policy.test.ts \
+            extensions/cherry-cognitive/src/ingestion.test.ts \
+            extensions/cherry-cognitive/src/autonomy.test.ts \
+            extensions/cherry-cognitive/src/consolidation.test.ts \
+            extensions/cherry-cognitive/src/learning.test.ts \
+            extensions/cherry-cognitive/src/prediction.test.ts \
+            extensions/cherry-cognitive/src/attention-schema.test.ts \
+            extensions/cherry-cognitive/src/telemetry.test.ts \
+            2>&1 | tee /tmp/cherry-tests.log
 
       - name: Detect formatting drift
         id: format-drift
         continue-on-error: true
         run: git diff --exit-code -- extensions/cherry-cognitive
 
-      - name: Upload formatted extension
+      - name: Upload validation artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: cherry-cognitive-formatted
-          path: extensions/cherry-cognitive
+          name: cherry-cognitive-validation
+          path: |
+            extensions/cherry-cognitive
+            /tmp/cherry-lint.log
+            /tmp/cherry-tests.log
           if-no-files-found: error
           retention-days: 3
 
-      - name: Fail on formatting drift
-        if: steps.format-drift.outcome == 'failure'
+      - name: Fail validation when required
+        if: >-
+          steps.lint.outcome == 'failure' ||
+          steps.tests.outcome == 'failure' ||
+          steps.format-drift.outcome == 'failure'
         run: |
-          echo "Cherry Cognitive files require formatting. Download the cherry-cognitive-formatted artifact."
+          echo "Cherry Cognitive validation failed. Download the cherry-cognitive-validation artifact for formatted files and diagnostics."
           exit 1
