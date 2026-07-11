@@ -4,7 +4,7 @@
     "onStartup": true
   },
   "name": "Cherry Cognitive 2026",
-  "description": "Continuous multimodal cognition, NCA-inspired state, self-model, semantic memory, guarded autonomy, policy enforcement, health APIs, and human-controlled tool execution for OpenClaw agents.",
+  "description": "Continuous multimodal cognition, NCA-inspired state, self-model, semantic memory, adaptive reliability learning, guarded autonomy, policy enforcement, health APIs, and human-controlled tool execution for OpenClaw agents.",
   "contracts": {
     "tools": [
       "cherry_cognitive_observe",
@@ -15,50 +15,28 @@
       "cherry_cognitive_autonomy",
       "cherry_cognitive_memory",
       "cherry_cognitive_policy",
+      "cherry_cognitive_learning",
       "cherry_cognitive_health"
     ]
   },
   "toolMetadata": {
-    "cherry_cognitive_observe": {
-      "optional": true
-    },
-    "cherry_cognitive_goal": {
-      "optional": true
-    },
-    "cherry_cognitive_state": {
-      "optional": true
-    },
-    "cherry_cognitive_reflect": {
-      "optional": true
-    },
-    "cherry_cognitive_ingest": {
-      "optional": true
-    },
-    "cherry_cognitive_autonomy": {
-      "optional": true
-    },
-    "cherry_cognitive_memory": {
-      "optional": true
-    },
-    "cherry_cognitive_policy": {
-      "optional": true
-    },
-    "cherry_cognitive_health": {
-      "optional": true
-    }
+    "cherry_cognitive_observe": { "optional": true },
+    "cherry_cognitive_goal": { "optional": true },
+    "cherry_cognitive_state": { "optional": true },
+    "cherry_cognitive_reflect": { "optional": true },
+    "cherry_cognitive_ingest": { "optional": true },
+    "cherry_cognitive_autonomy": { "optional": true },
+    "cherry_cognitive_memory": { "optional": true },
+    "cherry_cognitive_policy": { "optional": true },
+    "cherry_cognitive_learning": { "optional": true },
+    "cherry_cognitive_health": { "optional": true }
   },
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
     "properties": {
-      "enabled": {
-        "type": "boolean",
-        "default": true
-      },
-      "identity": {
-        "type": "string",
-        "default": "Cherry Cognitive Agent"
-      },
+      "enabled": { "type": "boolean", "default": true },
+      "identity": { "type": "string", "default": "Cherry Cognitive Agent" },
       "tickIntervalMs": {
         "type": "integer",
         "minimum": 1000,
@@ -83,23 +61,12 @@
         "maximum": 5000,
         "default": 256
       },
-      "promptInjection": {
-        "type": "boolean",
-        "default": true
-      },
-      "heartbeatAwareness": {
-        "type": "boolean",
-        "default": true
-      },
-      "autoObserveMessages": {
-        "type": "boolean",
-        "default": true
-      },
+      "promptInjection": { "type": "boolean", "default": true },
+      "heartbeatAwareness": { "type": "boolean", "default": true },
+      "autoObserveMessages": { "type": "boolean", "default": true },
       "approvalRequiredTools": {
         "type": "array",
-        "items": {
-          "type": "string"
-        },
+        "items": { "type": "string" },
         "default": []
       },
       "approvalTimeoutMs": {
@@ -112,10 +79,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "enabled": {
-            "type": "boolean",
-            "default": true
-          },
+          "enabled": { "type": "boolean", "default": true },
           "mode": {
             "type": "string",
             "enum": ["off", "suggest", "guarded"],
@@ -145,15 +109,10 @@
             "maximum": 1,
             "default": 0.2
           },
-          "diagnosticOnly": {
-            "type": "boolean",
-            "default": true
-          },
+          "diagnosticOnly": { "type": "boolean", "default": true },
           "allowedTools": {
             "type": "array",
-            "items": {
-              "type": "string"
-            },
+            "items": { "type": "string" },
             "default": []
           }
         }
@@ -162,14 +121,8 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "enabled": {
-            "type": "boolean",
-            "default": true
-          },
-          "autoConsolidate": {
-            "type": "boolean",
-            "default": true
-          },
+          "enabled": { "type": "boolean", "default": true },
+          "autoConsolidate": { "type": "boolean", "default": true },
           "minEpisodes": {
             "type": "integer",
             "minimum": 2,
@@ -202,14 +155,54 @@
           }
         }
       },
+      "learning": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "enabled": { "type": "boolean", "default": true },
+          "learningRate": {
+            "type": "number",
+            "minimum": 0.01,
+            "maximum": 1,
+            "default": 0.18
+          },
+          "minimumSamples": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000,
+            "default": 3
+          },
+          "confidenceFloor": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0.15
+          },
+          "confidenceCeiling": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0.98
+          },
+          "maxProfilesPerSession": {
+            "type": "integer",
+            "minimum": 8,
+            "maximum": 10000,
+            "default": 256
+          },
+          "persistIntervalMs": {
+            "type": "integer",
+            "minimum": 5000,
+            "maximum": 600000,
+            "default": 60000
+          }
+        }
+      },
       "policy": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "enabled": {
-            "type": "boolean",
-            "default": true
-          },
+          "enabled": { "type": "boolean", "default": true },
           "mode": {
             "type": "string",
             "enum": ["monitor", "enforce"],
@@ -241,35 +234,25 @@
           },
           "blockedTools": {
             "type": "array",
-            "items": {
-              "type": "string"
-            },
+            "items": { "type": "string" },
             "default": []
           },
           "approvalTools": {
             "type": "array",
-            "items": {
-              "type": "string"
-            },
+            "items": { "type": "string" },
             "default": []
           },
           "readOnlyTools": {
             "type": "array",
-            "items": {
-              "type": "string"
-            }
+            "items": { "type": "string" }
           },
           "destructivePatterns": {
             "type": "array",
-            "items": {
-              "type": "string"
-            }
+            "items": { "type": "string" }
           },
           "sensitivePatterns": {
             "type": "array",
-            "items": {
-              "type": "string"
-            }
+            "items": { "type": "string" }
           }
         }
       }
