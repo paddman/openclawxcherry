@@ -1,0 +1,97 @@
+{
+  "plugins": {
+    "entries": {
+      "cherry-cognitive": {
+        "enabled": true,
+        "config": {
+          "identity": "Cherry IDC Cognitive Agent",
+          "tickIntervalMs": 5000,
+          "persistIntervalMs": 30000,
+          "maxWorkingMemory": 64,
+          "maxEpisodicMemory": 1024,
+          "promptInjection": true,
+          "heartbeatAwareness": true,
+          "autoObserveMessages": true,
+          "approvalRequiredTools": [
+            "exec",
+            "write_file",
+            "delete_file",
+            "restart_service",
+            "create_vm",
+            "delete_vm"
+          ],
+          "approvalTimeoutMs": 60000,
+          "autonomy": {
+            "enabled": true,
+            "mode": "suggest",
+            "maxProposalsPerSession": 32,
+            "proposalTtlMs": 21600000,
+            "minimumConfidence": 0.55,
+            "maximumAutomaticRisk": 0.15,
+            "diagnosticOnly": true,
+            "allowedTools": [
+              "status",
+              "search",
+              "inspect",
+              "query",
+              "fetch",
+              "get_vm_status",
+              "list_vms",
+              "read_logs"
+            ]
+          },
+          "consolidation": {
+            "enabled": true,
+            "autoConsolidate": true,
+            "minEpisodes": 4,
+            "maxSemanticMemoriesPerSession": 1024,
+            "minConfidence": 0.55,
+            "duplicateThreshold": 0.72,
+            "persistIntervalMs": 60000
+          },
+          "learning": {
+            "enabled": true,
+            "learningRate": 0.18,
+            "minimumSamples": 3,
+            "confidenceFloor": 0.15,
+            "confidenceCeiling": 0.98,
+            "maxProfilesPerSession": 512,
+            "persistIntervalMs": 60000
+          },
+          "policy": {
+            "enabled": true,
+            "mode": "enforce",
+            "approvalRiskThreshold": 0.45,
+            "blockRiskThreshold": 0.92,
+            "maxCallsPerMinute": 30,
+            "maxSerializedParamChars": 100000,
+            "blockedTools": [
+              "factory_reset",
+              "wipe_storage"
+            ],
+            "approvalTools": [
+              "exec",
+              "create_vm",
+              "delete_vm",
+              "shutdown_vm",
+              "restart_service"
+            ],
+            "readOnlyTools": [
+              "read",
+              "search",
+              "list",
+              "get",
+              "inspect",
+              "status",
+              "health",
+              "metrics",
+              "query",
+              "fetch",
+              "read_logs"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
