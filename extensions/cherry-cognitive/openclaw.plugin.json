@@ -4,13 +4,18 @@
     "onStartup": true
   },
   "name": "Cherry Cognitive 2026",
-  "description": "Continuous multimodal cognitive state, NCA-inspired recurrent processing, self-model, memory, goals, reflection, and guarded tool autonomy for OpenClaw agents.",
+  "description": "Continuous multimodal cognition, NCA-inspired state, self-model, semantic memory, guarded autonomy, policy enforcement, health APIs, and human-controlled tool execution for OpenClaw agents.",
   "contracts": {
     "tools": [
       "cherry_cognitive_observe",
       "cherry_cognitive_goal",
       "cherry_cognitive_state",
-      "cherry_cognitive_reflect"
+      "cherry_cognitive_reflect",
+      "cherry_cognitive_ingest",
+      "cherry_cognitive_autonomy",
+      "cherry_cognitive_memory",
+      "cherry_cognitive_policy",
+      "cherry_cognitive_health"
     ]
   },
   "toolMetadata": {
@@ -24,6 +29,21 @@
       "optional": true
     },
     "cherry_cognitive_reflect": {
+      "optional": true
+    },
+    "cherry_cognitive_ingest": {
+      "optional": true
+    },
+    "cherry_cognitive_autonomy": {
+      "optional": true
+    },
+    "cherry_cognitive_memory": {
+      "optional": true
+    },
+    "cherry_cognitive_policy": {
+      "optional": true
+    },
+    "cherry_cognitive_health": {
       "optional": true
     }
   },
@@ -87,6 +107,171 @@
         "minimum": 5000,
         "maximum": 300000,
         "default": 60000
+      },
+      "autonomy": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "default": true
+          },
+          "mode": {
+            "type": "string",
+            "enum": ["off", "suggest", "guarded"],
+            "default": "suggest"
+          },
+          "maxProposalsPerSession": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 500,
+            "default": 24
+          },
+          "proposalTtlMs": {
+            "type": "integer",
+            "minimum": 60000,
+            "maximum": 2592000000,
+            "default": 21600000
+          },
+          "minimumConfidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0.45
+          },
+          "maximumAutomaticRisk": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0.2
+          },
+          "diagnosticOnly": {
+            "type": "boolean",
+            "default": true
+          },
+          "allowedTools": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          }
+        }
+      },
+      "consolidation": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "default": true
+          },
+          "autoConsolidate": {
+            "type": "boolean",
+            "default": true
+          },
+          "minEpisodes": {
+            "type": "integer",
+            "minimum": 2,
+            "maximum": 100,
+            "default": 4
+          },
+          "maxSemanticMemoriesPerSession": {
+            "type": "integer",
+            "minimum": 16,
+            "maximum": 10000,
+            "default": 512
+          },
+          "minConfidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0.5
+          },
+          "duplicateThreshold": {
+            "type": "number",
+            "minimum": 0.2,
+            "maximum": 1,
+            "default": 0.72
+          },
+          "persistIntervalMs": {
+            "type": "integer",
+            "minimum": 5000,
+            "maximum": 600000,
+            "default": 60000
+          }
+        }
+      },
+      "policy": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "default": true
+          },
+          "mode": {
+            "type": "string",
+            "enum": ["monitor", "enforce"],
+            "default": "enforce"
+          },
+          "approvalRiskThreshold": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0.45
+          },
+          "blockRiskThreshold": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0.92
+          },
+          "maxCallsPerMinute": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000,
+            "default": 30
+          },
+          "maxSerializedParamChars": {
+            "type": "integer",
+            "minimum": 1000,
+            "maximum": 2000000,
+            "default": 100000
+          },
+          "blockedTools": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          },
+          "approvalTools": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          },
+          "readOnlyTools": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "destructivePatterns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "sensitivePatterns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
       }
     }
   }
