@@ -20,7 +20,7 @@ concurrency:
 jobs:
   validate:
     name: Format, lint, and unit tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
 
     steps:
@@ -31,7 +31,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
 
       - name: Enable Corepack
         run: corepack enable
