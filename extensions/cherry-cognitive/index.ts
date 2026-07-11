@@ -109,7 +109,9 @@ export default definePluginEntry({
             severity: "warning" as const,
             timeoutMs: config.approvalTimeoutMs,
             timeoutBehavior: "deny" as const,
-            allowedDecisions: ["allow-once", "allow-always", "deny"] as const,
+            allowedDecisions: ["allow-once", "allow-always", "deny"] as Array<
+              "allow-once" | "allow-always" | "deny"
+            >,
             pluginId: api.id,
             onResolution: (decision) => {
               runtime.recordApproval(ctx.sessionKey, event.toolName, decision);
