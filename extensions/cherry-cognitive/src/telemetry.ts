@@ -1,8 +1,9 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { AutonomyPlanner } from "./autonomy.js";
 import type { MemoryConsolidator } from "./consolidation.js";
+import type { AdaptiveLearningEngine } from "./learning.js";
 import type { ToolPolicyEngine } from "./policy.js";
-import type { CherryCognitiveRuntime } from "./runtime.js";
+import type { TrackedCognitiveRuntime } from "./tracked-runtime.js";
 
 export type CognitiveHealthSnapshot = {
   status: "ok" | "degraded" | "critical";
@@ -16,6 +17,7 @@ export type CognitiveHealthSnapshot = {
   };
   memory: ReturnType<MemoryConsolidator["stats"]>;
   autonomy: ReturnType<AutonomyPlanner["stats"]>;
+  learning: ReturnType<AdaptiveLearningEngine["stats"]>;
   policy: {
     enabled: boolean;
     mode: string;
@@ -56,10 +58,11 @@ function metricLine(name: string, value: number, labels?: Record<string, string>
 }
 
 export function buildCognitiveHealth(
-  runtime: CherryCognitiveRuntime,
+  runtime: TrackedCognitiveRuntime,
   autonomy: AutonomyPlanner,
   memory: MemoryConsolidator,
   policy: ToolPolicyEngine,
+  learning: AdaptiveLearningEngine,
 ): CognitiveHealthSnapshot {
   const sessionKeys = runtime.listSessionKeys();
   const snapshots = sessionKeys.map((sessionKey) => runtime.snapshot(sessionKey));
@@ -90,6 +93,7 @@ export function buildCognitiveHealth(
     },
     memory: memory.stats(),
     autonomy: autonomy.stats(),
+    learning: learning.stats(),
     policy: {
       enabled: policyState.enabled,
       mode: policyState.mode,
@@ -156,6 +160,12 @@ export function renderPrometheusMetrics(snapshot: CognitiveHealthSnapshot): stri
     metricLine("openclaw_cherry_cognitive_items", snapshot.autonomy.total, {
       kind: "autonomy_proposals",
     }),
+    metricLine("openclaw_cherry_cognitive_items", snapshot.learning.sourceProfiles, {
+      kind: "source_profiles",
+    }),
+    metricLine("openclaw_cherry_cognitive_items", snapshot.learning.toolProfiles, {
+      kind: "tool_profiles",
+    }),
     "# HELP openclaw_cherry_cognitive_signal Aggregate cognitive signal values from 0 to 1.",
     "# TYPE openclaw_cherry_cognitive_signal gauge",
     metricLine("openclaw_cherry_cognitive_signal", snapshot.aggregate.averageConfidence, {
@@ -169,6 +179,12 @@ export function renderPrometheusMetrics(snapshot: CognitiveHealthSnapshot): stri
     }),
     metricLine("openclaw_cherry_cognitive_signal", snapshot.aggregate.maximumRisk, {
       signal: "maximum_risk",
+    }),
+    metricLine("openclaw_cherry_cognitive_signal", snapshot.learning.averageSourceReliability, {
+      signal: "source_reliability",
+    }),
+    metricLine("openclaw_cherry_cognitive_signal", snapshot.learning.averageToolSuccessRate, {
+      signal: "tool_success_rate",
     }),
   ];
 
@@ -196,14 +212,15 @@ function writeJson(res: ServerResponse, statusCode: number, payload: unknown): v
 }
 
 export function createHealthHandler(
-  runtime: CherryCognitiveRuntime,
+  runtime: TrackedCognitiveRuntime,
   autonomy: AutonomyPlanner,
   memory: MemoryConsolidator,
   policy: ToolPolicyEngine,
+  learning: AdaptiveLearningEngine,
 ): (req: IncomingMessage, res: ServerResponse) => Promise<void> {
   return async (_req, res) => {
     try {
-      const snapshot = buildCognitiveHealth(runtime, autonomy, memory, policy);
+      const snapshot = buildCognitiveHealth(runtime, autonomy, memory, policy, learning);
       writeJson(res, snapshot.status === "critical" ? 503 : 200, snapshot);
     } catch (error) {
       writeJson(res, 500, {
@@ -215,14 +232,15 @@ export function createHealthHandler(
 }
 
 export function createMetricsHandler(
-  runtime: CherryCognitiveRuntime,
+  runtime: TrackedCognitiveRuntime,
   autonomy: AutonomyPlanner,
   memory: MemoryConsolidator,
   policy: ToolPolicyEngine,
+  learning: AdaptiveLearningEngine,
 ): (req: IncomingMessage, res: ServerResponse) => Promise<void> {
   return async (_req, res) => {
     try {
-      const snapshot = buildCognitiveHealth(runtime, autonomy, memory, policy);
+      const snapshot = buildCognitiveHealth(runtime, autonomy, memory, policy, learning);
       const body = renderPrometheusMetrics(snapshot);
       res.statusCode = 200;
       res.setHeader("content-type", "text/plain; version=0.0.4; charset=utf-8");
