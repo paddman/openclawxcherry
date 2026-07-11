@@ -42,16 +42,12 @@ jobs:
         run: pnpm exec oxfmt --write extensions/cherry-cognitive
 
       - name: Lint extension
-        id: lint
-        continue-on-error: true
         shell: bash
         run: |
           set -o pipefail
           pnpm exec oxlint --tsconfig config/tsconfig/oxlint.extensions.json extensions/cherry-cognitive 2>&1 | tee /tmp/cherry-lint.log
 
       - name: Run Cherry Cognitive unit tests
-        id: tests
-        continue-on-error: true
         shell: bash
         run: |
           set -o pipefail
@@ -67,14 +63,10 @@ jobs:
             extensions/cherry-cognitive/src/telemetry.test.ts \
             2>&1 | tee /tmp/cherry-tests.log
 
-      - name: Detect formatting drift
-        id: format_drift
-        continue-on-error: true
+      - name: Verify formatting is committed
         run: git diff --exit-code -- extensions/cherry-cognitive
 
-      - name: Detect lockfile drift
-        id: lockfile_drift
-        continue-on-error: true
+      - name: Verify lockfile is committed
         run: git diff --exit-code -- pnpm-lock.yaml
 
       - name: Upload validation artifact
@@ -87,19 +79,5 @@ jobs:
             pnpm-lock.yaml
             /tmp/cherry-lint.log
             /tmp/cherry-tests.log
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 3
-
-      - name: Report validation result
-        if: always()
-        env:
-          LINT_OUTCOME: ${{ steps.lint.outcome }}
-          TEST_OUTCOME: ${{ steps.tests.outcome }}
-          FORMAT_OUTCOME: ${{ steps.format_drift.outcome }}
-          LOCKFILE_OUTCOME: ${{ steps.lockfile_drift.outcome }}
-        run: |
-          echo "lint=$LINT_OUTCOME tests=$TEST_OUTCOME format=$FORMAT_OUTCOME lockfile=$LOCKFILE_OUTCOME"
-          if [[ "$LINT_OUTCOME" != "success" || "$TEST_OUTCOME" != "success" || "$FORMAT_OUTCOME" != "success" || "$LOCKFILE_OUTCOME" != "success" ]]; then
-            echo "Cherry Cognitive validation failed. Download the cherry-cognitive-validation artifact for diagnostics and generated files."
-            exit 1
-          fi
