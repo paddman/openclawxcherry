@@ -84,11 +84,15 @@ jobs:
           if-no-files-found: error
           retention-days: 3
 
-      - name: Fail validation when required
-        if: >-
-          steps.lint.outcome == 'failure' ||
-          steps.tests.outcome == 'failure' ||
-          steps.format-drift.outcome == 'failure'
+      - name: Report validation result
+        if: always()
+        env:
+          LINT_OUTCOME: ${{ steps.lint.outcome }}
+          TEST_OUTCOME: ${{ steps.tests.outcome }}
+          FORMAT_OUTCOME: ${{ steps['format-drift'].outcome }}
         run: |
-          echo "Cherry Cognitive validation failed. Download the cherry-cognitive-validation artifact for formatted files and diagnostics."
-          exit 1
+          echo "lint=$LINT_OUTCOME tests=$TEST_OUTCOME format=$FORMAT_OUTCOME"
+          if [[ "$LINT_OUTCOME" != "success" || "$TEST_OUTCOME" != "success" || "$FORMAT_OUTCOME" != "success" ]]; then
+            echo "Cherry Cognitive validation failed. Download the cherry-cognitive-validation artifact for diagnostics."
+            exit 1
+          fi
