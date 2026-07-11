@@ -38,8 +38,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
-      - name: Check formatting
-        run: pnpm exec oxfmt --check extensions/cherry-cognitive
+      - name: Format extension in validation workspace
+        run: pnpm exec oxfmt --write extensions/cherry-cognitive
 
       - name: Lint extension
         run: pnpm exec oxlint --tsconfig config/tsconfig/oxlint.extensions.json extensions/cherry-cognitive
@@ -56,3 +56,23 @@ jobs:
           extensions/cherry-cognitive/src/prediction.test.ts
           extensions/cherry-cognitive/src/attention-schema.test.ts
           extensions/cherry-cognitive/src/telemetry.test.ts
+
+      - name: Detect formatting drift
+        id: format-drift
+        continue-on-error: true
+        run: git diff --exit-code -- extensions/cherry-cognitive
+
+      - name: Upload formatted extension
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cherry-cognitive-formatted
+          path: extensions/cherry-cognitive
+          if-no-files-found: error
+          retention-days: 3
+
+      - name: Fail on formatting drift
+        if: steps.format-drift.outcome == 'failure'
+        run: |
+          echo "Cherry Cognitive files require formatting. Download the cherry-cognitive-formatted artifact."
+          exit 1
