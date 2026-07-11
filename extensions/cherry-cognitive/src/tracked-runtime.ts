@@ -8,8 +8,29 @@ import type {
   ReflectionReport,
 } from "./types.js";
 
+type ObservationCalibrator = (
+  sessionKey: string | undefined,
+  input: ObservationInput,
+) => ObservationInput;
+
+type ObservationListener = (
+  sessionKey: string | undefined,
+  observation: Observation,
+) => void;
+
+type ToolOutcomeListener = (event: {
+  sessionKey: string | undefined;
+  toolName: string;
+  success: boolean;
+  error?: string;
+  durationMs?: number;
+}) => void;
+
 export class TrackedCognitiveRuntime extends CherryCognitiveRuntime {
   private readonly knownSessionKeys = new Set<string>();
+  private readonly observationListeners = new Set<ObservationListener>();
+  private readonly toolOutcomeListeners = new Set<ToolOutcomeListener>();
+  private observationCalibrator?: ObservationCalibrator;
 
   constructor(config: CognitiveConfig) {
     super(config);
@@ -19,9 +40,38 @@ export class TrackedCognitiveRuntime extends CherryCognitiveRuntime {
     return [...this.knownSessionKeys].sort((left, right) => left.localeCompare(right));
   }
 
+  setObservationCalibrator(calibrator: ObservationCalibrator | undefined): void {
+    this.observationCalibrator = calibrator;
+  }
+
+  onObservation(listener: ObservationListener): () => void {
+    this.observationListeners.add(listener);
+    return () => {
+      this.observationListeners.delete(listener);
+    };
+  }
+
+  onToolOutcome(listener: ToolOutcomeListener): () => void {
+    this.toolOutcomeListeners.add(listener);
+    return () => {
+      this.toolOutcomeListeners.delete(listener);
+    };
+  }
+
   override observe(sessionKey: string | undefined, input: ObservationInput): Observation {
     this.touch(sessionKey);
-    return super.observe(sessionKey, input);
+    const calibrated = this.observationCalibrator
+      ? this.observationCalibrator(sessionKey, input)
+      : input;
+    const observation = super.observe(sessionKey, calibrated);
+    for (const listener of this.observationListeners) {
+      try {
+        listener(sessionKey, observation);
+      } catch {
+        // Learning and telemetry listeners must never interrupt the primary agent path.
+      }
+    }
+    return observation;
   }
 
   override notePrompt(sessionKey: string | undefined, prompt: string): void {
@@ -37,6 +87,19 @@ export class TrackedCognitiveRuntime extends CherryCognitiveRuntime {
   ): void {
     this.touch(sessionKey);
     super.recordToolResult(sessionKey, toolName, error, durationMs);
+    for (const listener of this.toolOutcomeListeners) {
+      try {
+        listener({
+          sessionKey,
+          toolName,
+          success: !error,
+          error,
+          durationMs,
+        });
+      } catch {
+        // Learning and telemetry listeners must never interrupt the primary agent path.
+      }
+    }
   }
 
   override recordRunEnd(
