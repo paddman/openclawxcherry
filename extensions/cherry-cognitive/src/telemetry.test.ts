@@ -44,7 +44,8 @@ describe("Cherry Cognitive telemetry", () => {
 
     runtime.observe("agent:critical", {
       modality: "log",
-      summary: "Critical shutdown attack outage danger alarm",
+      summary:
+        "Critical shutdown attack outage danger alarm urgent immediately now emergency",
       source: "siem",
       confidence: 0.95,
       salience: 1,
