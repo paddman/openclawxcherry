@@ -1,0 +1,93 @@
+{
+  "id": "cherry-cognitive",
+  "activation": {
+    "onStartup": true
+  },
+  "name": "Cherry Cognitive 2026",
+  "description": "Continuous multimodal cognitive state, NCA-inspired recurrent processing, self-model, memory, goals, reflection, and guarded tool autonomy for OpenClaw agents.",
+  "contracts": {
+    "tools": [
+      "cherry_cognitive_observe",
+      "cherry_cognitive_goal",
+      "cherry_cognitive_state",
+      "cherry_cognitive_reflect"
+    ]
+  },
+  "toolMetadata": {
+    "cherry_cognitive_observe": {
+      "optional": true
+    },
+    "cherry_cognitive_goal": {
+      "optional": true
+    },
+    "cherry_cognitive_state": {
+      "optional": true
+    },
+    "cherry_cognitive_reflect": {
+      "optional": true
+    }
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": {
+        "type": "boolean",
+        "default": true
+      },
+      "identity": {
+        "type": "string",
+        "default": "Cherry Cognitive Agent"
+      },
+      "tickIntervalMs": {
+        "type": "integer",
+        "minimum": 1000,
+        "maximum": 60000,
+        "default": 5000
+      },
+      "persistIntervalMs": {
+        "type": "integer",
+        "minimum": 5000,
+        "maximum": 300000,
+        "default": 30000
+      },
+      "maxWorkingMemory": {
+        "type": "integer",
+        "minimum": 8,
+        "maximum": 256,
+        "default": 32
+      },
+      "maxEpisodicMemory": {
+        "type": "integer",
+        "minimum": 32,
+        "maximum": 5000,
+        "default": 256
+      },
+      "promptInjection": {
+        "type": "boolean",
+        "default": true
+      },
+      "heartbeatAwareness": {
+        "type": "boolean",
+        "default": true
+      },
+      "autoObserveMessages": {
+        "type": "boolean",
+        "default": true
+      },
+      "approvalRequiredTools": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "default": []
+      },
+      "approvalTimeoutMs": {
+        "type": "integer",
+        "minimum": 5000,
+        "maximum": 300000,
+        "default": 60000
+      }
+    }
+  }
+}
