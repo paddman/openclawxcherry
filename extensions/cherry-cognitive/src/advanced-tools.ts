@@ -11,6 +11,7 @@ import {
   parseIngestionPayload,
   type IngestionKind,
 } from "./ingestion.js";
+import type { AdaptiveLearningEngine } from "./learning.js";
 import type { ToolPolicyEngine } from "./policy.js";
 import type { TrackedCognitiveRuntime } from "./tracked-runtime.js";
 import { buildCognitiveHealth } from "./telemetry.js";
@@ -122,8 +123,9 @@ export function createAdvancedCognitiveToolFactories(params: {
   autonomy: AutonomyPlanner;
   memory: MemoryConsolidator;
   policy: ToolPolicyEngine;
+  learning: AdaptiveLearningEngine;
 }): OpenClawPluginToolFactory[] {
-  const { runtime, autonomy, memory, policy } = params;
+  const { runtime, autonomy, memory, policy, learning } = params;
 
   const ingestionFactory: OpenClawPluginToolFactory = (ctx) =>
     ({
@@ -346,17 +348,61 @@ export function createAdvancedCognitiveToolFactories(params: {
       },
     }) satisfies AnyAgentTool;
 
+  const learningFactory: OpenClawPluginToolFactory = (ctx) =>
+    ({
+      name: "cherry_cognitive_learning",
+      label: "Cherry Cognitive Learning",
+      description:
+        "Inspect adaptive source confidence and tool reliability learned from observations and execution outcomes.",
+      parameters: Type.Object({
+        action: Type.Unsafe<"snapshot" | "stats" | "tool">({
+          type: "string",
+          enum: ["snapshot", "stats", "tool"],
+        }),
+        toolName: Type.Optional(Type.String({ maxLength: 200 })),
+      }),
+      async execute(_id: string, toolParams: Record<string, unknown>) {
+        const action = textParam(toolParams, "action", true);
+        if (action === "stats") {
+          return result({ ok: true, stats: learning.stats() });
+        }
+        if (action === "snapshot") {
+          return result({ ok: true, learning: learning.snapshot(currentSession(ctx)) });
+        }
+        if (action === "tool") {
+          return result({
+            ok: true,
+            profile: learning.toolReliability(
+              currentSession(ctx),
+              textParam(toolParams, "toolName", true) ?? "",
+            ),
+          });
+        }
+        throw new Error(`Unsupported learning action: ${action}`);
+      },
+    }) satisfies AnyAgentTool;
+
   const healthFactory: OpenClawPluginToolFactory = () =>
     ({
       name: "cherry_cognitive_health",
       label: "Cherry Cognitive Health",
       description:
-        "Return aggregate health, session risk, memory, autonomy, policy, and recurrent-field telemetry for Cherry Cognitive 2026.",
+        "Return aggregate health, session risk, memory, autonomy, policy, learning, and recurrent-field telemetry for Cherry Cognitive 2026.",
       parameters: Type.Object({}),
       async execute() {
-        return result({ ok: true, health: buildCognitiveHealth(runtime, autonomy, memory, policy) });
+        return result({
+          ok: true,
+          health: buildCognitiveHealth(runtime, autonomy, memory, policy, learning),
+        });
       },
     }) satisfies AnyAgentTool;
 
-  return [ingestionFactory, autonomyFactory, memoryFactory, policyFactory, healthFactory];
+  return [
+    ingestionFactory,
+    autonomyFactory,
+    memoryFactory,
+    policyFactory,
+    learningFactory,
+    healthFactory,
+  ];
 }
