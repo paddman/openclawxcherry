@@ -4,7 +4,7 @@
     "onStartup": true
   },
   "name": "Cherry Cognitive 2026",
-  "description": "Continuous multimodal cognition, NCA-inspired state, self-model, semantic memory, adaptive reliability learning, guarded autonomy, policy enforcement, health APIs, and human-controlled tool execution for OpenClaw agents.",
+  "description": "Continuous multimodal cognition, NCA-inspired state, explicit attention schema, predictive processing, self-model, semantic memory, adaptive reliability learning, guarded autonomy, policy enforcement, health APIs, and human-controlled tool execution for OpenClaw agents.",
   "contracts": {
     "tools": [
       "cherry_cognitive_observe",
@@ -16,6 +16,8 @@
       "cherry_cognitive_memory",
       "cherry_cognitive_policy",
       "cherry_cognitive_learning",
+      "cherry_cognitive_predict",
+      "cherry_cognitive_attention",
       "cherry_cognitive_health"
     ]
   },
@@ -29,6 +31,8 @@
     "cherry_cognitive_memory": { "optional": true },
     "cherry_cognitive_policy": { "optional": true },
     "cherry_cognitive_learning": { "optional": true },
+    "cherry_cognitive_predict": { "optional": true },
+    "cherry_cognitive_attention": { "optional": true },
     "cherry_cognitive_health": { "optional": true }
   },
   "configSchema": {
@@ -74,6 +78,74 @@
         "minimum": 5000,
         "maximum": 300000,
         "default": 60000
+      },
+      "attention": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "capacity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 16,
+            "default": 4
+          },
+          "contenderLimit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 64,
+            "default": 8
+          },
+          "suppressedLimit": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 64,
+            "default": 6
+          },
+          "reflexRiskThreshold": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0.82
+          },
+          "deliberativeUncertaintyThreshold": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0.58
+          }
+        }
+      },
+      "prediction": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "enabled": { "type": "boolean", "default": true },
+          "autoEvaluate": { "type": "boolean", "default": true },
+          "defaultHorizonMs": {
+            "type": "integer",
+            "minimum": 10000,
+            "maximum": 2592000000,
+            "default": 1800000
+          },
+          "maxPredictionsPerSession": {
+            "type": "integer",
+            "minimum": 8,
+            "maximum": 10000,
+            "default": 128
+          },
+          "confirmationSimilarity": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 1,
+            "default": 0.46
+          },
+          "persistIntervalMs": {
+            "type": "integer",
+            "minimum": 5000,
+            "maximum": 600000,
+            "default": 60000
+          }
+        }
       },
       "autonomy": {
         "type": "object",
