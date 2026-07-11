@@ -227,9 +227,9 @@ export class AutonomyPlanner {
     const confidence = clamp01(input.confidence);
     const requiresApproval =
       input.requiresApproval ??
-      risk > this.config.maximumAutomaticRisk ||
-      this.config.mode !== "guarded" ||
-      Boolean(tool && !this.isAllowedTool(tool));
+      (risk > this.config.maximumAutomaticRisk ||
+        this.config.mode !== "guarded" ||
+        Boolean(tool && !this.isAllowedTool(tool)));
 
     const proposal: ActionProposal = {
       id: randomUUID(),
