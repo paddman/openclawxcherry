@@ -25,8 +25,8 @@ async function applyControlCharacterMigration(name, anchor = "") {
   let source = await readSource(name);
   const importLine = 'import { sanitizeControlCharacters } from "./text-sanitize.js";\n';
   source = anchor ? addImport(source, anchor, importLine) : `${importLine}${source}`;
-  source = source.replaceAll(
-    'value\n    .replace(/[\\u0000-\\u001f\\u007f]/gu, " ")',
+  source = source.replace(
+    /value\s*\.replace\(\/\[\\u0000-\\u001f\\u007f\]\/gu,\s*" "\)/gu,
     "sanitizeControlCharacters(value)",
   );
   await writeSource(name, source);
