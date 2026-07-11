@@ -280,7 +280,10 @@ export class ToolPolicyEngine {
     }
 
     const readOnlyHint = this.config.readOnlyTools.some(
-      (prefix) => toolName === prefix || toolName.startsWith(`${prefix}_`) || toolName.includes(`_${prefix}`),
+      (prefix) =>
+        toolName === prefix ||
+        toolName.startsWith(`${prefix}_`) ||
+        toolName.includes(`_${prefix}`),
     );
     if (readOnlyHint) {
       matchedSignals.push("read-only-hint");
@@ -292,8 +295,14 @@ export class ToolPolicyEngine {
     }
 
     let risk = riskFromCognitiveLevel(input.cognitiveRiskLevel);
-    risk += destructiveMatches.length > 0 ? Math.min(0.68, 0.42 + destructiveMatches.length * 0.08) : 0;
-    risk += sensitiveMatches.length > 0 ? Math.min(0.28, 0.12 + sensitiveMatches.length * 0.04) : 0;
+    risk +=
+      destructiveMatches.length > 0
+        ? Math.min(0.68, 0.42 + destructiveMatches.length * 0.08)
+        : 0;
+    risk +=
+      sensitiveMatches.length > 0
+        ? Math.min(0.28, 0.12 + sensitiveMatches.length * 0.04)
+        : 0;
     risk += exactMatch(this.config.approvalTools, toolName) ? 0.58 : 0;
     risk += exactMatch(this.config.blockedTools, toolName) ? 1 : 0;
     risk += serialized.length > this.config.maxSerializedParamChars ? 0.3 : 0;
@@ -306,7 +315,8 @@ export class ToolPolicyEngine {
       action = "block";
     } else if (
       risk >= this.config.approvalRiskThreshold ||
-      exactMatch(this.config.approvalTools, toolName)
+      exactMatch(this.config.approvalTools, toolName) ||
+      rateExceeded
     ) {
       action = "approval";
     }
