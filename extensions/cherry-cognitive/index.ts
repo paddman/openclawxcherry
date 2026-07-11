@@ -1,5 +1,9 @@
 import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
 import { createAdvancedCognitiveToolFactories } from "./src/advanced-tools.js";
+import {
+  AttentionSchemaEngine,
+  parseAttentionSchemaConfig,
+} from "./src/attention-schema.js";
 import { AutonomyPlanner, parseAutonomyConfig } from "./src/autonomy.js";
 import {
   MemoryConsolidator,
@@ -7,6 +11,8 @@ import {
 } from "./src/consolidation.js";
 import { AdaptiveLearningEngine, parseLearningConfig } from "./src/learning.js";
 import { ToolPolicyEngine, parseToolPolicyConfig } from "./src/policy.js";
+import { PredictionEngine, parsePredictionConfig } from "./src/prediction.js";
+import { createPredictiveToolFactories } from "./src/predictive-tools.js";
 import { inferInboundModality, parseCognitiveConfig } from "./src/runtime.js";
 import {
   buildCognitiveHealth,
@@ -20,7 +26,7 @@ export default definePluginEntry({
   id: "cherry-cognitive",
   name: "Cherry Cognitive 2026",
   description:
-    "Functional machine-consciousness layer with multimodal ingestion, recurrent NCA-inspired state, semantic memory, adaptive reliability learning, self-model, guarded autonomy, policy enforcement, telemetry, and human-controlled execution.",
+    "Functional machine-consciousness layer with multimodal ingestion, recurrent NCA-inspired state, explicit attention schema, predictive processing, semantic memory, adaptive reliability learning, self-model, guarded autonomy, policy enforcement, telemetry, and human-controlled execution.",
   register(api) {
     const config = parseCognitiveConfig(api.pluginConfig);
     if (!config.enabled) {
@@ -33,12 +39,15 @@ export default definePluginEntry({
     const memory = new MemoryConsolidator(parseConsolidationConfig(api.pluginConfig));
     const policy = new ToolPolicyEngine(parseToolPolicyConfig(api.pluginConfig));
     const learning = new AdaptiveLearningEngine(parseLearningConfig(api.pluginConfig));
+    const prediction = new PredictionEngine(parsePredictionConfig(api.pluginConfig));
+    const attention = new AttentionSchemaEngine(parseAttentionSchemaConfig(api.pluginConfig));
 
     runtime.setObservationCalibrator((sessionKey, input) =>
       learning.calibrateObservation(sessionKey, input),
     );
     runtime.onObservation((sessionKey, observation) => {
       learning.recordObservation(sessionKey, observation);
+      prediction.evaluateObservation(sessionKey, observation);
     });
     runtime.onToolOutcome((event) => {
       learning.recordToolOutcome(
@@ -62,6 +71,13 @@ export default definePluginEntry({
     })) {
       api.registerTool(factory, { optional: true });
     }
+    for (const factory of createPredictiveToolFactories({
+      runtime,
+      prediction,
+      attention,
+    })) {
+      api.registerTool(factory, { optional: true });
+    }
 
     api.registerService({
       id: "cherry-cognitive-runtime",
@@ -71,13 +87,20 @@ export default definePluginEntry({
           memory.start(ctx.stateDir),
           autonomy.start(ctx.stateDir),
           learning.start(ctx.stateDir),
+          prediction.start(ctx.stateDir),
         ]);
         ctx.logger.info(
-          `Cherry Cognitive 2026 v2 started (tick=${config.tickIntervalMs}ms, persist=${config.persistIntervalMs}ms, autonomy=${autonomy.config.mode}, policy=${policy.config.mode}, learning=${learning.config.enabled})`,
+          `Cherry Cognitive 2026 v2 started (tick=${config.tickIntervalMs}ms, persist=${config.persistIntervalMs}ms, autonomy=${autonomy.config.mode}, policy=${policy.config.mode}, learning=${learning.config.enabled}, prediction=${prediction.config.enabled})`,
         );
       },
       async stop(ctx) {
-        await Promise.all([runtime.stop(), memory.stop(), autonomy.stop(), learning.stop()]);
+        await Promise.all([
+          runtime.stop(),
+          memory.stop(),
+          autonomy.stop(),
+          learning.stop(),
+          prediction.stop(),
+        ]);
         ctx.logger.info("Cherry Cognitive 2026 v2 stopped and persisted");
       },
     });
@@ -151,6 +174,13 @@ export default definePluginEntry({
           .action(() => {
             console.log(JSON.stringify(learning.stats(), null, 2));
           });
+
+        command
+          .command("prediction-stats")
+          .description("Show predictive-processing accuracy and calibration statistics")
+          .action(() => {
+            console.log(JSON.stringify(prediction.stats(), null, 2));
+          });
       },
       { commands: ["cognitive"] },
     );
@@ -169,16 +199,19 @@ export default definePluginEntry({
     });
 
     api.on("agent_turn_prepare", (event, ctx) => {
-      const sessionKey = ctx.sessionKey;
-      runtime.notePrompt(sessionKey, event.prompt);
+      const currentSessionKey = ctx.sessionKey;
+      runtime.notePrompt(currentSessionKey, event.prompt);
       if (!config.promptInjection) {
         return;
       }
+      const state = runtime.snapshot(currentSessionKey);
       const contexts = [
-        runtime.buildPromptContext(sessionKey),
-        memory.buildPromptContext(sessionKey, event.prompt),
-        learning.buildPromptContext(sessionKey),
-        autonomy.buildPromptContext(sessionKey),
+        runtime.buildPromptContext(currentSessionKey),
+        attention.buildPromptContext(state),
+        prediction.buildPromptContext(currentSessionKey),
+        memory.buildPromptContext(currentSessionKey, event.prompt),
+        learning.buildPromptContext(currentSessionKey),
+        autonomy.buildPromptContext(currentSessionKey),
       ].filter(Boolean);
       return {
         prependContext: contexts.join("\n\n"),
@@ -189,8 +222,11 @@ export default definePluginEntry({
       if (!config.heartbeatAwareness) {
         return;
       }
+      const state = runtime.snapshot(ctx.sessionKey);
       const contexts = [
         runtime.buildPromptContext(ctx.sessionKey),
+        attention.buildPromptContext(state),
+        prediction.buildPromptContext(ctx.sessionKey),
         learning.buildPromptContext(ctx.sessionKey),
         autonomy.buildPromptContext(ctx.sessionKey),
       ].filter(Boolean);
@@ -292,6 +328,7 @@ export default definePluginEntry({
         memory.persist(),
         autonomy.persist(),
         learning.persist(),
+        prediction.persist(),
       ]);
     });
   },
