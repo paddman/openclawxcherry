@@ -1,4 +1,8 @@
-import type { SessionCognitiveState, WorkspaceItem } from "./types.js";
+import type {
+  Observation,
+  SessionCognitiveState,
+  WorkspaceItem,
+} from "./types.js";
 
 export type CognitiveMode = "idle" | "monitoring" | "deliberative" | "reflex";
 
@@ -41,6 +45,15 @@ export type AttentionSchemaConfig = {
   suppressedLimit: number;
   reflexRiskThreshold: number;
   deliberativeUncertaintyThreshold: number;
+};
+
+type EnrichedWorkspaceItem = {
+  workspace: WorkspaceItem;
+  observation?: Observation;
+  source?: string;
+  salience: number;
+  novelty: number;
+  uncertainty: number;
 };
 
 const DEFAULT_CONFIG: AttentionSchemaConfig = {
@@ -100,41 +113,58 @@ export function parseAttentionSchemaConfig(
   };
 }
 
-function contenderScore(item: WorkspaceItem): number {
+function enrichWorkspace(state: SessionCognitiveState): EnrichedWorkspaceItem[] {
+  const observationsById = new Map(
+    state.workingMemory.map((observation) => [observation.id, observation] as const),
+  );
+  return state.workspace.map((workspace) => {
+    const observation = observationsById.get(workspace.observationId);
+    return {
+      workspace,
+      observation,
+      source: observation?.source,
+      salience: observation?.salience ?? workspace.score,
+      novelty: observation?.novelty ?? 0,
+      uncertainty: observation?.uncertainty ?? clamp01(1 - workspace.confidence),
+    };
+  });
+}
+
+function contenderScore(item: EnrichedWorkspaceItem): number {
   return clamp01(
     item.salience * 0.28 +
-      item.risk * 0.28 +
+      item.workspace.risk * 0.28 +
       item.novelty * 0.18 +
       item.uncertainty * 0.14 +
-      item.confidence * 0.12,
+      item.workspace.confidence * 0.12,
   );
 }
 
-function selectionReason(item: WorkspaceItem): string {
+function selectionReason(item: EnrichedWorkspaceItem): string {
   const factors = [
-    { name: "risk", value: item.risk },
+    { name: "risk", value: item.workspace.risk },
     { name: "salience", value: item.salience },
     { name: "novelty", value: item.novelty },
     { name: "uncertainty", value: item.uncertainty },
-    { name: "confidence", value: item.confidence },
+    { name: "confidence", value: item.workspace.confidence },
   ].sort((left, right) => right.value - left.value);
   return `${factors[0]?.name ?? "combined score"}=${(factors[0]?.value ?? 0).toFixed(2)}; ${factors[1]?.name ?? "context"}=${(factors[1]?.value ?? 0).toFixed(2)}`;
 }
 
 function toContender(
-  item: WorkspaceItem,
+  item: EnrichedWorkspaceItem,
   rank: number,
   capacity: number,
 ): AttentionContender {
   return {
     rank,
-    observationId: item.observationId,
-    summary: item.summary,
+    observationId: item.workspace.observationId,
+    summary: item.workspace.summary,
     source: item.source,
-    modality: item.modality,
+    modality: item.workspace.modality,
     score: contenderScore(item),
     salience: item.salience,
-    risk: item.risk,
+    risk: item.workspace.risk,
     novelty: item.novelty,
     uncertainty: item.uncertainty,
     selected: rank <= capacity,
@@ -201,8 +231,11 @@ function tunnelVisionRisk(
           ),
         );
   const lowDiversity =
-    (sourceCount <= 1 ? 0.38 : 0) + (modalityCount <= 1 ? 0.28 : 0) + dominantShare * 0.2;
-  const persistence = state.fieldSnapshot.activation > 0.8 && switchingPressure(contenders) < 0.2 ? 0.14 : 0;
+    (sourceCount <= 1 ? 0.38 : 0) +
+    (modalityCount <= 1 ? 0.28 : 0) +
+    dominantShare * 0.2;
+  const persistence =
+    state.fieldSnapshot.activation > 0.8 && switchingPressure(contenders) < 0.2 ? 0.14 : 0;
   return clamp01(lowDiversity + persistence);
 }
 
@@ -214,16 +247,22 @@ function recommendations(
 ): string[] {
   const result: string[] = [];
   if (mode === "reflex") {
-    result.push("Prioritize immediate containment and independent verification before irreversible action.");
+    result.push(
+      "Prioritize immediate containment and independent verification before irreversible action.",
+    );
   }
   if (mode === "deliberative") {
-    result.push("Compare competing hypotheses and identify the cheapest observation that separates them.");
+    result.push(
+      "Compare competing hypotheses and identify the cheapest observation that separates them.",
+    );
   }
   if (tunnelRisk >= 0.6) {
     result.push("Seek a different source or modality to reduce attentional tunnel vision.");
   }
   if (switchingPressure(contenders) >= 0.5) {
-    result.push("Hold the current goal stable long enough to collect decisive evidence before switching focus.");
+    result.push(
+      "Hold the current goal stable long enough to collect decisive evidence before switching focus.",
+    );
   }
   if (state.selfModel.confidence < 0.5) {
     result.push("State uncertainty explicitly and avoid presenting a single explanation as settled.");
@@ -245,7 +284,7 @@ export class AttentionSchemaEngine {
   }
 
   inspect(state: SessionCognitiveState): AttentionSchema {
-    const sorted = state.workspace
+    const sorted = enrichWorkspace(state)
       .map((item) => ({ item, score: contenderScore(item) }))
       .sort((left, right) => right.score - left.score)
       .map(({ item }, index) => toContender(item, index + 1, this.config.capacity));
