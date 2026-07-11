@@ -1,16 +1,25 @@
 import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
+import { createAdvancedCognitiveToolFactories } from "./src/advanced-tools.js";
+import { AutonomyPlanner, parseAutonomyConfig } from "./src/autonomy.js";
 import {
-  CherryCognitiveRuntime,
-  inferInboundModality,
-  parseCognitiveConfig,
-} from "./src/runtime.js";
+  MemoryConsolidator,
+  parseConsolidationConfig,
+} from "./src/consolidation.js";
+import { inferInboundModality, parseCognitiveConfig } from "./src/runtime.js";
+import { ToolPolicyEngine, parseToolPolicyConfig } from "./src/policy.js";
+import {
+  buildCognitiveHealth,
+  createHealthHandler,
+  createMetricsHandler,
+} from "./src/telemetry.js";
 import { createCognitiveToolFactories } from "./src/tools.js";
+import { TrackedCognitiveRuntime } from "./src/tracked-runtime.js";
 
 export default definePluginEntry({
   id: "cherry-cognitive",
   name: "Cherry Cognitive 2026",
   description:
-    "Functional machine-consciousness layer with multimodal observations, recurrent NCA-inspired state, self-model, memory, goals, reflection, and guarded autonomy.",
+    "Functional machine-consciousness layer with multimodal ingestion, recurrent NCA-inspired state, semantic memory, self-model, guarded autonomy, adaptive policy, telemetry, and human-controlled execution.",
   register(api) {
     const config = parseCognitiveConfig(api.pluginConfig);
     if (!config.enabled) {
@@ -18,9 +27,20 @@ export default definePluginEntry({
       return;
     }
 
-    const runtime = new CherryCognitiveRuntime(config);
+    const runtime = new TrackedCognitiveRuntime(config);
+    const autonomy = new AutonomyPlanner(parseAutonomyConfig(api.pluginConfig));
+    const memory = new MemoryConsolidator(parseConsolidationConfig(api.pluginConfig));
+    const policy = new ToolPolicyEngine(parseToolPolicyConfig(api.pluginConfig));
 
     for (const factory of createCognitiveToolFactories(runtime)) {
+      api.registerTool(factory, { optional: true });
+    }
+    for (const factory of createAdvancedCognitiveToolFactories({
+      runtime,
+      autonomy,
+      memory,
+      policy,
+    })) {
       api.registerTool(factory, { optional: true });
     }
 
@@ -28,15 +48,77 @@ export default definePluginEntry({
       id: "cherry-cognitive-runtime",
       async start(ctx) {
         await runtime.start(ctx.stateDir);
+        await memory.start(ctx.stateDir);
+        await autonomy.start(ctx.stateDir);
         ctx.logger.info(
-          `Cherry Cognitive 2026 started (tick=${config.tickIntervalMs}ms, persist=${config.persistIntervalMs}ms)`,
+          `Cherry Cognitive 2026 v2 started (tick=${config.tickIntervalMs}ms, persist=${config.persistIntervalMs}ms, autonomy=${autonomy.config.mode}, policy=${policy.config.mode})`,
         );
       },
       async stop(ctx) {
-        await runtime.stop();
-        ctx.logger.info("Cherry Cognitive 2026 stopped");
+        await Promise.all([runtime.stop(), memory.stop(), autonomy.stop()]);
+        ctx.logger.info("Cherry Cognitive 2026 v2 stopped and persisted");
       },
     });
+
+    api.registerHttpRoute({
+      path: "/api/cherry-cognitive/health",
+      auth: "gateway",
+      match: "exact",
+      gatewayRuntimeScopeSurface: "trusted-operator",
+      handler: createHealthHandler(runtime, autonomy, memory, policy),
+    });
+
+    api.registerHttpRoute({
+      path: "/api/cherry-cognitive/metrics",
+      auth: "gateway",
+      match: "exact",
+      gatewayRuntimeScopeSurface: "trusted-operator",
+      handler: createMetricsHandler(runtime, autonomy, memory, policy),
+    });
+
+    api.registerCli(
+      ({ program }) => {
+        const command = program
+          .command("cognitive")
+          .description("Inspect Cherry Cognitive 2026 operational state");
+
+        command
+          .command("health")
+          .description("Show aggregate cognitive health as JSON")
+          .action(() => {
+            console.log(JSON.stringify(buildCognitiveHealth(runtime, autonomy, memory, policy), null, 2));
+          });
+
+        command
+          .command("sessions")
+          .description("List tracked cognitive sessions")
+          .action(() => {
+            console.log(JSON.stringify(runtime.listSessionKeys(), null, 2));
+          });
+
+        command
+          .command("policy")
+          .description("Show the effective cognitive tool policy")
+          .action(() => {
+            console.log(JSON.stringify(policy.inspect(), null, 2));
+          });
+
+        command
+          .command("memory-stats")
+          .description("Show consolidated semantic-memory statistics")
+          .action(() => {
+            console.log(JSON.stringify(memory.stats(), null, 2));
+          });
+
+        command
+          .command("autonomy-stats")
+          .description("Show guarded-autonomy proposal statistics")
+          .action(() => {
+            console.log(JSON.stringify(autonomy.stats(), null, 2));
+          });
+      },
+      { commands: ["cognitive"] },
+    );
 
     api.on("message_received", (event, ctx) => {
       if (!config.autoObserveMessages || !event.content.trim()) {
@@ -52,12 +134,18 @@ export default definePluginEntry({
     });
 
     api.on("agent_turn_prepare", (event, ctx) => {
-      runtime.notePrompt(ctx.sessionKey, event.prompt);
+      const sessionKey = ctx.sessionKey;
+      runtime.notePrompt(sessionKey, event.prompt);
       if (!config.promptInjection) {
         return;
       }
+      const contexts = [
+        runtime.buildPromptContext(sessionKey),
+        memory.buildPromptContext(sessionKey, event.prompt),
+        autonomy.buildPromptContext(sessionKey),
+      ].filter(Boolean);
       return {
-        prependContext: runtime.buildPromptContext(ctx.sessionKey),
+        prependContext: contexts.join("\n\n"),
       };
     });
 
@@ -65,29 +153,67 @@ export default definePluginEntry({
       if (!config.heartbeatAwareness) {
         return;
       }
+      const contexts = [
+        runtime.buildPromptContext(ctx.sessionKey),
+        autonomy.buildPromptContext(ctx.sessionKey),
+      ].filter(Boolean);
       return {
-        prependContext: runtime.buildPromptContext(ctx.sessionKey),
+        prependContext: contexts.join("\n\n"),
       };
     });
 
     api.on("before_tool_call", (event, ctx) => {
-      if (!runtime.requiresApproval(event.toolName)) {
+      const state = runtime.snapshot(ctx.sessionKey);
+      const decision = policy.evaluate({
+        sessionKey: ctx.sessionKey,
+        toolName: event.toolName,
+        params: event.params,
+        cognitiveRiskLevel: state.selfModel.riskLevel,
+      });
+
+      if (decision.action === "block") {
+        runtime.observe(ctx.sessionKey, {
+          modality: "internal",
+          summary: `Policy blocked tool ${event.toolName}: ${decision.reason}`,
+          source: "policy",
+          salience: 0.9,
+          confidence: 0.95,
+          data: {
+            risk: decision.risk,
+            matchedSignals: decision.matchedSignals,
+          },
+        });
+        return {
+          block: true,
+          blockReason: `${decision.reason} Risk=${decision.risk.toFixed(2)}; signals=${decision.matchedSignals.join(", ") || "none"}`,
+        };
+      }
+
+      const configuredApproval = runtime.requiresApproval(event.toolName);
+      if (decision.action !== "approval" && !configuredApproval) {
         return;
       }
+
       return {
         requireApproval: {
           title: `Approve ${event.toolName}`,
-          description:
-            "Cherry Cognitive 2026 marked this tool as approval-required. Review the target and impact before allowing execution.",
-          severity: "warning" as const,
+          description: [
+            "Cherry Cognitive 2026 requires human review before this tool can run.",
+            `Policy risk: ${decision.risk.toFixed(2)}.`,
+            decision.matchedSignals.length > 0
+              ? `Signals: ${decision.matchedSignals.join(", ")}.`
+              : "The tool is explicitly listed in approvalRequiredTools.",
+            "Review the target, scope, rollback path, and production impact.",
+          ].join(" "),
+          severity: decision.risk >= 0.75 ? ("critical" as const) : ("warning" as const),
           timeoutMs: config.approvalTimeoutMs,
           timeoutBehavior: "deny" as const,
           allowedDecisions: ["allow-once", "allow-always", "deny"] as Array<
             "allow-once" | "allow-always" | "deny"
           >,
           pluginId: api.id,
-          onResolution: (decision) => {
-            runtime.recordApproval(ctx.sessionKey, event.toolName, decision);
+          onResolution: (approvalDecision) => {
+            runtime.recordApproval(ctx.sessionKey, event.toolName, approvalDecision);
           },
         },
       };
@@ -99,10 +225,18 @@ export default definePluginEntry({
 
     api.on("agent_end", (event, ctx) => {
       runtime.recordRunEnd(ctx.sessionKey, event.success, event.error, event.durationMs);
+      const state = runtime.snapshot(ctx.sessionKey);
+      if (memory.config.autoConsolidate) {
+        memory.consolidate(state);
+      }
+      if (autonomy.config.enabled && autonomy.config.mode !== "off") {
+        const reflection = runtime.reflect(ctx.sessionKey);
+        autonomy.deriveFromReflection(ctx.sessionKey, state, reflection);
+      }
     });
 
     api.on("session_end", async () => {
-      await runtime.persist();
+      await Promise.all([runtime.persist(), memory.persist(), autonomy.persist()]);
     });
   },
 });
