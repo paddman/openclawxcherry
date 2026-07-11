@@ -21,7 +21,7 @@ describe("CherryCognitiveRuntime", () => {
 
     runtime.observe("agent:test", {
       modality: "sensor",
-      summary: "Critical rack temperature alarm at 44C",
+      summary: "Critical security outage alarm at rack temperature 44C",
       source: "rack-07",
       confidence: 0.95,
     });
