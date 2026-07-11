@@ -21,6 +21,21 @@
             "delete_vm"
           ],
           "approvalTimeoutMs": 60000,
+          "attention": {
+            "capacity": 4,
+            "contenderLimit": 8,
+            "suppressedLimit": 6,
+            "reflexRiskThreshold": 0.82,
+            "deliberativeUncertaintyThreshold": 0.58
+          },
+          "prediction": {
+            "enabled": true,
+            "autoEvaluate": true,
+            "defaultHorizonMs": 1800000,
+            "maxPredictionsPerSession": 128,
+            "confirmationSimilarity": 0.46,
+            "persistIntervalMs": 60000
+          },
           "autonomy": {
             "enabled": true,
             "mode": "suggest",
