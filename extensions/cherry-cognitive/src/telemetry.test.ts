@@ -27,15 +27,16 @@ describe("Cherry Cognitive telemetry", () => {
     const health = buildCognitiveHealth(runtime, autonomy, memory, policy, learning);
     const metrics = renderPrometheusMetrics(health);
 
+    expect(health.runtimeOperational).toBe(true);
     expect(health.sessions.total).toBe(1);
     expect(health.aggregate.observations).toBeGreaterThan(0);
     expect(health.aggregate.activeGoals).toBe(1);
-    expect(metrics).toContain("openclaw_cherry_cognitive_up");
+    expect(metrics).toContain("openclaw_cherry_cognitive_up 1");
     expect(metrics).toContain("openclaw_cherry_cognitive_signal");
     expect(metrics).toContain("tool_success_rate");
   });
 
-  it("reports critical health when a critical risk signal is active", () => {
+  it("reports critical risk without declaring the runtime down", () => {
     const runtime = new TrackedCognitiveRuntime(parseCognitiveConfig(undefined));
     const autonomy = new AutonomyPlanner(parseAutonomyConfig(undefined));
     const memory = new MemoryConsolidator(parseConsolidationConfig(undefined));
@@ -52,7 +53,10 @@ describe("Cherry Cognitive telemetry", () => {
     });
 
     const health = buildCognitiveHealth(runtime, autonomy, memory, policy, learning);
+    const metrics = renderPrometheusMetrics(health);
     expect(health.status).toBe("critical");
+    expect(health.runtimeOperational).toBe(true);
     expect(health.sessions.criticalRisk).toBeGreaterThan(0);
+    expect(metrics).toContain("openclaw_cherry_cognitive_up 1");
   });
 });
