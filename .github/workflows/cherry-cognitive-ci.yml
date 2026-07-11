@@ -1,0 +1,59 @@
+name: Cherry Cognitive CI
+
+on:
+  pull_request:
+    paths:
+      - "extensions/cherry-cognitive/**"
+      - ".github/workflows/cherry-cognitive-ci.yml"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cherry-cognitive-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Format, lint, and unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Check formatting
+        run: pnpm exec oxfmt --check extensions/cherry-cognitive
+
+      - name: Lint extension
+        run: pnpm exec oxlint --tsconfig config/tsconfig/oxlint.extensions.json extensions/cherry-cognitive
+
+      - name: Run Cherry Cognitive unit tests
+        run: >-
+          pnpm test
+          extensions/cherry-cognitive/src/runtime.test.ts
+          extensions/cherry-cognitive/src/policy.test.ts
+          extensions/cherry-cognitive/src/ingestion.test.ts
+          extensions/cherry-cognitive/src/autonomy.test.ts
+          extensions/cherry-cognitive/src/consolidation.test.ts
+          extensions/cherry-cognitive/src/learning.test.ts
+          extensions/cherry-cognitive/src/prediction.test.ts
+          extensions/cherry-cognitive/src/attention-schema.test.ts
+          extensions/cherry-cognitive/src/telemetry.test.ts
