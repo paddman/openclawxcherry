@@ -22,20 +22,24 @@ export default definePluginEntry({
       api.registerTool(factory, { optional: true });
     }
 
-    api.on("before_tool_call", (event) => {
-      if (event.toolName !== "linux_service_action") return;
-      return {
-        requireApproval: {
-          title: "Approve Linux service action",
-          description:
-            "This operation changes a systemd service on a remote Linux host. Verify the host, unit, dependencies, and maintenance window.",
-          severity: "warning" as const,
-          timeoutMs: 60_000,
-          timeoutBehavior: "deny" as const,
-          allowedDecisions: ["allow-once", "deny"] as Array<"allow-once" | "deny">,
-          pluginId: api.id,
-        },
-      };
+    api.registerTrustedToolPolicy({
+      id: "linux-ssh.service-actions",
+      description: "Require operator approval before Linux systemd service mutations.",
+      evaluate(event) {
+        if (event.toolName !== "linux_service_action") return;
+        return {
+          requireApproval: {
+            title: "Approve Linux service action",
+            description:
+              "This operation changes a systemd service on a remote Linux host. Verify the host, unit, dependencies, and maintenance window.",
+            severity: "warning" as const,
+            timeoutMs: 60_000,
+            timeoutBehavior: "deny" as const,
+            allowedDecisions: ["allow-once", "deny"] as Array<"allow-once" | "deny">,
+            pluginId: api.id,
+          },
+        };
+      },
     });
 
     api.registerService({
