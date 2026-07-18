@@ -10,6 +10,9 @@
       "vmware_vm_status",
       "vmware_vm_power",
       "vmware_recent_tasks"
+    ],
+    "trustedToolPolicies": [
+      "vmware.vm-power"
     ]
   },
   "toolMetadata": {
