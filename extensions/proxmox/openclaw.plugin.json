@@ -1,0 +1,77 @@
+{
+  "id": "proxmox",
+  "activation": {
+    "onStartup": true
+  },
+  "name": "Proxmox VE",
+  "description": "Connect OpenClaw agents to Proxmox VE with API-token authentication, scoped inventory access, and approval-gated guest power actions.",
+  "contracts": {
+    "tools": [
+      "proxmox_connection_test",
+      "proxmox_cluster_resources",
+      "proxmox_guest_status",
+      "proxmox_guest_action",
+      "proxmox_task_status"
+    ]
+  },
+  "toolMetadata": {
+    "proxmox_connection_test": { "optional": true },
+    "proxmox_cluster_resources": { "optional": true },
+    "proxmox_guest_status": { "optional": true },
+    "proxmox_guest_action": { "optional": true },
+    "proxmox_task_status": { "optional": true }
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "baseUrl": {
+        "type": "string",
+        "description": "Proxmox VE URL, for example https://pve.example.com:8006"
+      },
+      "tokenId": {
+        "type": "string",
+        "description": "API token identity, for example openclaw@pve!agent"
+      },
+      "tokenSecret": {
+        "type": "string",
+        "description": "API token secret. Prefer PROXMOX_TOKEN_SECRET in the service environment."
+      },
+      "verifyTls": {
+        "type": "boolean",
+        "default": true
+      },
+      "caFile": {
+        "type": "string",
+        "description": "Optional path to the Proxmox CA certificate PEM file."
+      },
+      "timeoutMs": {
+        "type": "integer",
+        "minimum": 1000,
+        "maximum": 120000,
+        "default": 15000
+      },
+      "allowMutations": {
+        "type": "boolean",
+        "default": false,
+        "description": "Enable start, shutdown, reboot, and stop actions. Actions still require human approval."
+      },
+      "allowedNodes": {
+        "type": "array",
+        "items": { "type": "string" },
+        "default": []
+      },
+      "allowedVmids": {
+        "type": "array",
+        "items": { "type": "integer", "minimum": 1 },
+        "default": []
+      },
+      "maxResults": {
+        "type": "integer",
+        "minimum": 10,
+        "maximum": 1000,
+        "default": 200
+      }
+    }
+  }
+}
