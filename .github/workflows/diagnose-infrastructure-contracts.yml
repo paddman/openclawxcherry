@@ -1,0 +1,52 @@
+name: Diagnose infrastructure contracts
+
+on:
+  push:
+    branches:
+      - feature/proxmox-integration
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: feature/proxmox-integration
+          fetch-depth: 1
+
+      - name: Setup Node environment
+        uses: ./.github/actions/setup-node-env
+        with:
+          install-bun: 'false'
+          node-version: '24.x'
+          install-deps: 'true'
+          frozen-lockfile: 'true'
+          use-actions-cache: 'true'
+          save-actions-cache: 'false'
+
+      - name: Run plugin contract diagnostics
+        shell: bash
+        run: |
+          set +e
+          pnpm exec vitest run src/plugins/contracts --reporter=verbose > /tmp/contract-output.txt 2>&1
+          status=$?
+          {
+            echo "exit_status=$status"
+            echo
+            tail -n 1600 /tmp/contract-output.txt
+          } > .github/contract-diagnostic.txt
+          exit 0
+
+      - name: Commit diagnostics
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/contract-diagnostic.txt
+          git commit -m 'ci: capture infrastructure contract diagnostics'
+          git push origin HEAD:feature/proxmox-integration
