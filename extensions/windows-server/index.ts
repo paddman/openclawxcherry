@@ -22,20 +22,24 @@ export default definePluginEntry({
       api.registerTool(factory, { optional: true });
     }
 
-    api.on("before_tool_call", (event) => {
-      if (event.toolName !== "windows_service_action") return;
-      return {
-        requireApproval: {
-          title: "Approve Windows service action",
-          description:
-            "This operation changes a remote Windows service. Verify the host, service, dependencies, and production impact.",
-          severity: "warning" as const,
-          timeoutMs: 60_000,
-          timeoutBehavior: "deny" as const,
-          allowedDecisions: ["allow-once", "deny"] as Array<"allow-once" | "deny">,
-          pluginId: api.id,
-        },
-      };
+    api.registerTrustedToolPolicy({
+      id: "windows-server.service-actions",
+      description: "Require operator approval before Windows service mutations.",
+      evaluate(event) {
+        if (event.toolName !== "windows_service_action") return;
+        return {
+          requireApproval: {
+            title: "Approve Windows service action",
+            description:
+              "This operation changes a remote Windows service. Verify the host, service, dependencies, and production impact.",
+            severity: "warning" as const,
+            timeoutMs: 60_000,
+            timeoutBehavior: "deny" as const,
+            allowedDecisions: ["allow-once", "deny"] as Array<"allow-once" | "deny">,
+            pluginId: api.id,
+          },
+        };
+      },
     });
 
     api.registerService({
