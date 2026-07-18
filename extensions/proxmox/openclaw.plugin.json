@@ -12,6 +12,9 @@
       "proxmox_guest_status",
       "proxmox_guest_action",
       "proxmox_task_status"
+    ],
+    "trustedToolPolicies": [
+      "proxmox.guest-power"
     ]
   },
   "toolMetadata": {
