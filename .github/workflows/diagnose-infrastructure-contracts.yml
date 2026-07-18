@@ -36,14 +36,28 @@ jobs:
           use-actions-cache: 'true'
           save-actions-cache: 'false'
 
-      - name: Run plugin contract diagnostics
+      - name: Run plugin-a contract diagnostics
         shell: bash
         run: |
           set +e
-          pnpm exec vitest run src/plugins/contracts --reporter=verbose > /tmp/contract-output.txt 2>&1
+          include_file=/tmp/plugin-a-include.json
+          INCLUDE_FILE="$include_file" node --input-type=module <<'EOF'
+          import { writeFileSync } from "node:fs";
+          import { createPluginContractTestShards } from "./scripts/lib/plugin-contract-test-plan.mjs";
+
+          const shard = createPluginContractTestShards().find(
+            (entry) => entry.checkName === "checks-fast-contracts-plugins-a",
+          );
+          if (!shard) throw new Error("plugins-a shard not found");
+          writeFileSync(process.env.INCLUDE_FILE, JSON.stringify(shard.includePatterns), "utf8");
+          console.log(JSON.stringify(shard, null, 2));
+          EOF
+          OPENCLAW_VITEST_INCLUDE_FILE="$include_file" pnpm test:contracts:plugins > /tmp/contract-output.txt 2>&1
           status=$?
           {
             echo "exit_status=$status"
+            echo
+            cat "$include_file"
             echo
             tail -n 1600 /tmp/contract-output.txt
           } > .github/contract-diagnostic.txt
