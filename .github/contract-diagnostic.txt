@@ -1,0 +1,156 @@
+exit_status=1
+
+["src/plugins/contracts/plugin-sdk-root-alias.test.ts","src/plugins/contracts/plugin-sdk-package-contract-guardrails.test.ts","src/plugins/contracts/boundary-invariants.test.ts","src/plugins/contracts/plugin-sdk-index.bundle.test.ts","src/plugins/contracts/providers.contract.test.ts","src/plugins/contracts/core-extension-facade-boundary.test.ts","src/plugins/contracts/runtime-import-side-effects.contract.test.ts","src/plugins/contracts/plugin-registration.contract.test.ts","src/plugins/contracts/wizard.choice-resolution.contract.test.ts","src/plugins/contracts/wizard.setup-options.contract.test.ts","src/plugins/contracts/bundled-extension-config-api-guardrails.test.ts","src/plugins/contracts/config-footprint-guardrails.test.ts","src/plugins/contracts/embedding-provider.contract.test.ts","src/plugins/contracts/memory-embedding-provider.contract.test.ts","src/plugins/contracts/package-manifest.contract.test.ts","src/plugins/contracts/plugin-sdk-runtime-api-guardrails.test.ts","src/plugins/contracts/provider-catalog-deprecation.contract.test.ts","src/plugins/contracts/registry.retry.test.ts","src/plugins/contracts/runtime-seams.contract.test.ts","src/plugins/contracts/session-actions.contract.test.ts","src/plugins/contracts/session-entry-projection.contract.test.ts","src/plugins/contracts/web-fetch-provider.contract.test.ts"]
+$ node scripts/run-vitest.mjs run --config test/vitest/vitest.contracts-plugin.config.ts --maxWorkers=1
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.8 [39m[90m/home/runner/work/openclawxcherry/openclawxcherry[39m
+
+ [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/plugin-sdk-package-contract-guardrails.test.ts [2m([22m[2m22 tests[22m[2m)[22m[33m 5909[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps configured local-origin fetch helpers out of the public SSRF runtime [33m 444[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps extension sources off deprecated plugin-sdk compatibility imports [33m 388[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps extension test-api exports consumed [33m 809[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps reserved SDK compatibility subpaths inside their owning bundled plugins [33m 331[2mms[22m[39m
+ [31m❯[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/plugin-sdk-runtime-api-guardrails.test.ts [2m([22m[2m6 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 23[2mms[22m[39m
+[31m     [31m×[31m keeps runtime api surfaces classified and guarded exports pinned[39m[32m 12[2mms[22m[39m
+     [32m✓[39m keeps bundled runtime api barrels off their own branded sdk facades[32m 4[2mms[22m[39m
+     [32m✓[39m keeps the composed hook-runner registry internal[32m 0[2mms[22m[39m
+     [32m✓[39m keeps Slack's narrow runtime-setter entrypoint pinned to a single export[32m 5[2mms[22m[39m
+     [32m✓[39m keeps Matrix's narrow runtime-setter entrypoint pinned to a single export[32m 1[2mms[22m[39m
+     [32m✓[39m keeps Feishu's narrow runtime-setter entrypoint pinned to a single export[32m 0[2mms[22m[39m
+ [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/session-entry-projection.contract.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 96[2mms[22m[39m
+ [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/plugin-sdk-root-alias.test.ts [2m([22m[2m31 tests[22m[2m)[22m[32m 31[2mms[22m[39m
+ [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/session-actions.contract.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 29[2mms[22m[39m
+ [31m❯[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/boundary-invariants.test.ts [2m([22m[2m14 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 1193[2mms[22m[39m
+     [32m✓[39m lists boundary invariant source files without walking roots in-process[32m 23[2mms[22m[39m
+     [32m✓[39m keeps bundled-capability-metadata confined to contract/test inventory[32m 0[2mms[22m[39m
+     [32m✓[39m keeps the bundled contract inventory out of non-test runtime code[32m 32[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps core tests off bundled extension deep imports [33m 696[2mms[22m[39m
+     [32m✓[39m keeps plugin contract tests off bundled path helpers unless the test is explicitly about paths[32m 11[2mms[22m[39m
+     [32m✓[39m keeps channel production code off bundled-plugin-metadata helpers[32m 11[2mms[22m[39m
+     [32m✓[39m keeps contract loaders off hand-built bundled extension paths[32m 15[2mms[22m[39m
+     [32m✓[39m keeps bundled plugin production code off legacy before_agent_start hooks[32m 95[2mms[22m[39m
+[31m     [31m×[31m keeps bundled plugin typed hook registrations on an explicit allowlist[39m[32m 16[2mms[22m[39m
+     [32m✓[39m keeps bundled plugin typed hook names on an explicit allowlist[32m 1[2mms[22m[39m
+     [32m✓[39m keeps bundled plugin production code off raw registerHook calls[32m 17[2mms[22m[39m
+     [32m✓[39m keeps long-lived bundled hook handlers on live runtime config lookups[32m 0[2mms[22m[39m
+     [32m✓[39m keeps live provider config surfaces on runtime config lookups[32m 0[2mms[22m[39m
+     [32m✓[39m keeps long-lived bundled hook handlers off startup-only registration gates[32m 0[2mms[22m[39m
+ [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/registry.retry.test.ts [2m([22m[2m6 tests[22m[2m)[22m[33m 432[2mms[22m[39m
+ [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/config-footprint-guardrails.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/runtime-seams.contract.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 54[2mms[22m[39m
+ [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/memory-embedding-provider.contract.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/provider-catalog-deprecation.contract.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 155[2mms[22m[39m
+ [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/plugin-sdk-index.bundle.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 780[2mms[22m[39m
+     [33m[2m✓[22m[39m emits importable bundled subpath entries [33m 776[2mms[22m[39m
+ [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/runtime-import-side-effects.contract.test.ts [2m([22m[2m9 tests[22m[2m)[22m[33m 560[2mms[22m[39m
+ [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/core-extension-facade-boundary.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 361[2mms[22m[39m
+ [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/embedding-provider.contract.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 2[2mms[22m[39m
+ [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/package-manifest.contract.test.ts [2m([22m[2m41 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/bundled-extension-config-api-guardrails.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 1[2mms[22m[39m
+ [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/providers.contract.test.ts [2m([22m[2m42 tests[22m[2m)[22m[33m 12219[2mms[22m[39m
+     [33m[2m✓[22m[39m loads bundled web search providers [33m 1120[2mms[22m[39m
+     [33m[2m✓[22m[39m loads bundled web search providers [33m 10831[2mms[22m[39m
+ [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/plugin-registration.contract.test.ts [2m([22m[2m90 tests[22m[2m)[22m[32m 199[2mms[22m[39m
+ [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/web-fetch-provider.contract.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 58[2mms[22m[39m
+ [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/wizard.choice-resolution.contract.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 1[2mms[22m[39m
+ [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/wizard.setup-options.contract.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 1[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 2 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/boundary-invariants.test.ts[2m > [22mplugin contract boundary invariants[2m > [22mkeeps bundled plugin typed hook registrations on an explicit allowlist
+[31m[1mAssertionError[22m: expected [ 'extensions/acpx/index.ts', …(10) ] to deeply equal [ 'extensions/acpx/index.ts', …(9) ][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -1,8 +1,9 @@[39m
+[2m  [[22m
+[2m    "extensions/acpx/index.ts",[22m
+[2m    "extensions/active-memory/index.ts",[22m
+[31m+   "extensions/cherry-cognitive/index.ts",[39m
+[2m    "extensions/codex/index.ts",[22m
+[2m    "extensions/diffs/src/plugin.ts",[22m
+[2m    "extensions/discord/subagent-hooks-api.ts",[22m
+[2m    "extensions/feishu/subagent-hooks-api.ts",[22m
+[2m    "extensions/matrix/subagent-hooks-api.ts",[22m
+
+[36m [2m❯[22m src/plugins/contracts/boundary-invariants.test.ts:[2m382:35[22m[39m
+    [90m380|[39m     [35mconst[39m files [33m=[39m [34mlistTsFiles[39m([32m"extensions"[39m[33m,[39m { excludeTests[33m:[39m [35mtrue[39m })[33m;[39m
+    [90m381|[39m     const hookRegistrationFiles = files.filter((file) => /\bapi\.on\(/…
+    [90m382|[39m     expect(hookRegistrationFiles).toEqual(BUNDLED_TYPED_HOOK_REGISTRAT…
+    [90m   |[39m                                   [31m^[39m
+    [90m383|[39m   })[33m;[39m
+    [90m384|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/plugin-sdk-runtime-api-guardrails.test.ts[2m > [22mruntime api guardrails[2m > [22mkeeps runtime api surfaces classified and guarded exports pinned
+[31m[1mAssertionError[22m: expected [ …(46) ] to deeply equal [ …(41) ][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -8,12 +8,14 @@[39m
+[2m    "extensions/discord/runtime-api.ts",[22m
+[2m    "extensions/feishu/runtime-api.ts",[22m
+[2m    "extensions/google/runtime-api.ts",[22m
+[2m    "extensions/googlechat/runtime-api.ts",[22m
+[2m    "extensions/imessage/runtime-api.ts",[22m
+[31m+   "extensions/infrastructure-control/runtime-api.ts",[39m
+[2m    "extensions/irc/runtime-api.ts",[22m
+[2m    "extensions/line/runtime-api.ts",[22m
+[31m+   "extensions/linux-ssh/runtime-api.ts",[39m
+[2m    "extensions/lmstudio/runtime-api.ts",[22m
+[2m    "extensions/lobster/runtime-api.ts",[22m
+[2m    "extensions/matrix/runtime-api.ts",[22m
+[2m    "extensions/mattermost/runtime-api.ts",[22m
+[2m    "extensions/memory-core/runtime-api.ts",[22m
+[33m@@ -21,23 +23,26 @@[39m
+[2m    "extensions/nextcloud-talk/runtime-api.ts",[22m
+[2m    "extensions/nostr/runtime-api.ts",[22m
+[2m    "extensions/ollama/runtime-api.ts",[22m
+[2m    "extensions/open-prose/runtime-api.ts",[22m
+[2m    "extensions/phone-control/runtime-api.ts",[22m
+[31m+   "extensions/proxmox/runtime-api.ts",[39m
+[2m    "extensions/qa-channel/runtime-api.ts",[22m
+[2m    "extensions/qa-lab/runtime-api.ts",[22m
+[2m    "extensions/qa-matrix/runtime-api.ts",[22m
+[2m    "extensions/qqbot/runtime-api.ts",[22m
+[2m    "extensions/signal/runtime-api.ts",[22m
+[2m    "extensions/slack/runtime-api.ts",[22m
+[2m    "extensions/telegram/runtime-api.ts",[22m
+[2m    "extensions/tlon/runtime-api.ts",[22m
+[2m    "extensions/tokenjuice/runtime-api.ts",[22m
+[2m    "extensions/twitch/runtime-api.ts",[22m
+[31m+   "extensions/vmware/runtime-api.ts",[39m
+[2m    "extensions/voice-call/runtime-api.ts",[22m
+[2m    "extensions/webhooks/runtime-api.ts",[22m
+[2m    "extensions/whatsapp/runtime-api.ts",[22m
+[31m+   "extensions/windows-server/runtime-api.ts",[39m
+[2m    "extensions/workboard/runtime-api.ts",[22m
+[2m    "extensions/zai/runtime-api.ts",[22m
+[2m    "extensions/zalo/runtime-api.ts",[22m
+[2m    "extensions/zalouser/runtime-api.ts",[22m
+[2m  ][22m
+
+[36m [2m❯[22m src/plugins/contracts/plugin-sdk-runtime-api-guardrails.test.ts:[2m331:40[22m[39m
+    [90m329|[39m       [33m...[39m[33mUNGUARDED_RUNTIME_API_PLUGIN_IDS[39m[33m.[39m[34mmap[39m(runtimeApiPluginFile)[33m,[39m
+    [90m330|[39m     ][33m.[39m[34mtoSorted[39m()[33m;[39m
+    [90m331|[39m     expect(runtimeApiFiles.toSorted()).toEqual(expectedRuntimeApiFiles…
+    [90m   |[39m                                        [31m^[39m
+    [90m332|[39m
+    [90m333|[39m     for (const file of Object.keys(RUNTIME_API_EXPORT_GUARDS).toSorted…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m20 passed[39m[22m[90m (22)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m319 passed[39m[22m[90m (321)[39m
+[2m   Start at [22m 11:47:36
+[2m   Duration [22m 40.08s[2m (transform 12.67s, setup 156ms, import 17.45s, tests 22.13s, environment 0ms)[22m
+
+
+::error file=/home/runner/work/openclawxcherry/openclawxcherry/src/plugins/contracts/boundary-invariants.test.ts,title=[contracts-plugin] src/plugins/contracts/boundary-invariants.test.ts > plugin contract boundary invariants > keeps bundled plugin typed hook registrations on an explicit allowlist,line=382,column=35::AssertionError: expected [ 'extensions/acpx/index.ts', …(10) ] to deeply equal [ 'extensions/acpx/index.ts', …(9) ]%0A%0A- Expected%0A+ Received%0A%0A@@ -1,8 +1,9 @@%0A  [%0A    "extensions/acpx/index.ts",%0A    "extensions/active-memory/index.ts",%0A+   "extensions/cherry-cognitive/index.ts",%0A    "extensions/codex/index.ts",%0A    "extensions/diffs/src/plugin.ts",%0A    "extensions/discord/subagent-hooks-api.ts",%0A    "extensions/feishu/subagent-hooks-api.ts",%0A    "extensions/matrix/subagent-hooks-api.ts",%0A%0A ❯ src/plugins/contracts/boundary-invariants.test.ts:382:35%0A%0A
+
+::error file=/home/runner/work/openclawxcherry/openclawxcherry/src/plugins/contracts/plugin-sdk-runtime-api-guardrails.test.ts,title=[contracts-plugin] src/plugins/contracts/plugin-sdk-runtime-api-guardrails.test.ts > runtime api guardrails > keeps runtime api surfaces classified and guarded exports pinned,line=331,column=40::AssertionError: expected [ …(46) ] to deeply equal [ …(41) ]%0A%0A- Expected%0A+ Received%0A%0A@@ -8,12 +8,14 @@%0A    "extensions/discord/runtime-api.ts",%0A    "extensions/feishu/runtime-api.ts",%0A    "extensions/google/runtime-api.ts",%0A    "extensions/googlechat/runtime-api.ts",%0A    "extensions/imessage/runtime-api.ts",%0A+   "extensions/infrastructure-control/runtime-api.ts",%0A    "extensions/irc/runtime-api.ts",%0A    "extensions/line/runtime-api.ts",%0A+   "extensions/linux-ssh/runtime-api.ts",%0A    "extensions/lmstudio/runtime-api.ts",%0A    "extensions/lobster/runtime-api.ts",%0A    "extensions/matrix/runtime-api.ts",%0A    "extensions/mattermost/runtime-api.ts",%0A    "extensions/memory-core/runtime-api.ts",%0A@@ -21,23 +23,26 @@%0A    "extensions/nextcloud-talk/runtime-api.ts",%0A    "extensions/nostr/runtime-api.ts",%0A    "extensions/ollama/runtime-api.ts",%0A    "extensions/open-prose/runtime-api.ts",%0A    "extensions/phone-control/runtime-api.ts",%0A+   "extensions/proxmox/runtime-api.ts",%0A    "extensions/qa-channel/runtime-api.ts",%0A    "extensions/qa-lab/runtime-api.ts",%0A    "extensions/qa-matrix/runtime-api.ts",%0A    "extensions/qqbot/runtime-api.ts",%0A    "extensions/signal/runtime-api.ts",%0A    "extensions/slack/runtime-api.ts",%0A    "extensions/telegram/runtime-api.ts",%0A    "extensions/tlon/runtime-api.ts",%0A    "extensions/tokenjuice/runtime-api.ts",%0A    "extensions/twitch/runtime-api.ts",%0A+   "extensions/vmware/runtime-api.ts",%0A    "extensions/voice-call/runtime-api.ts",%0A    "extensions/webhooks/runtime-api.ts",%0A    "extensions/whatsapp/runtime-api.ts",%0A+   "extensions/windows-server/runtime-api.ts",%0A    "extensions/workboard/runtime-api.ts",%0A    "extensions/zai/runtime-api.ts",%0A    "extensions/zalo/runtime-api.ts",%0A    "extensions/zalouser/runtime-api.ts",%0A  ]%0A%0A ❯ src/plugins/contracts/plugin-sdk-runtime-api-guardrails.test.ts:331:40%0A%0A
+[ELIFECYCLE] Command failed with exit code 1.
