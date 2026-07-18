@@ -22,20 +22,24 @@ export default definePluginEntry({
       api.registerTool(factory, { optional: true });
     }
 
-    api.on("before_tool_call", (event) => {
-      if (event.toolName !== "vmware_vm_power") return;
-      return {
-        requireApproval: {
-          title: "Approve VMware VM power action",
-          description:
-            "This operation changes a VMware virtual machine power state. Verify the inventory path, action, cluster impact, and guest shutdown requirements.",
-          severity: "warning" as const,
-          timeoutMs: 60_000,
-          timeoutBehavior: "deny" as const,
-          allowedDecisions: ["allow-once", "deny"] as Array<"allow-once" | "deny">,
-          pluginId: api.id,
-        },
-      };
+    api.registerTrustedToolPolicy({
+      id: "vmware.vm-power",
+      description: "Require operator approval before VMware VM power actions.",
+      evaluate(event) {
+        if (event.toolName !== "vmware_vm_power") return;
+        return {
+          requireApproval: {
+            title: "Approve VMware VM power action",
+            description:
+              "This operation changes a VMware virtual machine power state. Verify the inventory path, action, cluster impact, and guest shutdown requirements.",
+            severity: "warning" as const,
+            timeoutMs: 60_000,
+            timeoutBehavior: "deny" as const,
+            allowedDecisions: ["allow-once", "deny"] as Array<"allow-once" | "deny">,
+            pluginId: api.id,
+          },
+        };
+      },
     });
 
     api.registerService({
