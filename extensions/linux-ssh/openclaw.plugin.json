@@ -13,6 +13,9 @@
       "linux_service_status",
       "linux_service_logs",
       "linux_service_action"
+    ],
+    "trustedToolPolicies": [
+      "linux-ssh.service-actions"
     ]
   },
   "toolMetadata": {
