@@ -1,0 +1,23 @@
+{
+  "name": "@openclaw/linux-ssh",
+  "version": "2026.7.18",
+  "description": "Key-based Linux SSH connector for OpenClaw with system diagnostics, service logs, and approval-gated systemd actions.",
+  "type": "module",
+  "dependencies": {
+    "typebox": "1.1.39"
+  },
+  "devDependencies": {
+    "@openclaw/plugin-sdk": "workspace:*"
+  },
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "compat": {
+      "pluginApi": ">=2026.6.11"
+    },
+    "build": {
+      "openclawVersion": "2026.6.11"
+    }
+  }
+}

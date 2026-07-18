@@ -1,0 +1,64 @@
+{
+  "id": "linux-ssh",
+  "activation": {
+    "onStartup": true
+  },
+  "name": "Linux SSH",
+  "description": "Key-based SSH inventory, diagnostics, journal access, and approval-gated systemd service management for Linux servers.",
+  "contracts": {
+    "tools": [
+      "linux_hosts",
+      "linux_connection_test",
+      "linux_system_status",
+      "linux_service_status",
+      "linux_service_logs",
+      "linux_service_action"
+    ]
+  },
+  "toolMetadata": {
+    "linux_hosts": { "optional": true },
+    "linux_connection_test": { "optional": true },
+    "linux_system_status": { "optional": true },
+    "linux_service_status": { "optional": true },
+    "linux_service_logs": { "optional": true },
+    "linux_service_action": { "optional": true }
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "sshPath": { "type": "string", "default": "ssh" },
+      "timeoutMs": { "type": "integer", "minimum": 1000, "maximum": 300000, "default": 20000 },
+      "maxOutputBytes": { "type": "integer", "minimum": 10000, "maximum": 10000000, "default": 1000000 },
+      "allowMutations": { "type": "boolean", "default": false },
+      "hosts": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "hostname", "username"],
+          "properties": {
+            "id": { "type": "string" },
+            "hostname": { "type": "string" },
+            "port": { "type": "integer", "minimum": 1, "maximum": 65535, "default": 22 },
+            "username": { "type": "string" },
+            "identityFile": { "type": "string" },
+            "knownHostsFile": { "type": "string" },
+            "strictHostKeyChecking": {
+              "type": "string",
+              "enum": ["yes", "accept-new", "no"],
+              "default": "yes"
+            },
+            "sudo": { "type": "boolean", "default": true },
+            "allowedServices": {
+              "type": "array",
+              "items": { "type": "string" },
+              "default": []
+            }
+          }
+        },
+        "default": []
+      }
+    }
+  }
+}

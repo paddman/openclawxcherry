@@ -1,0 +1,23 @@
+{
+  "name": "@openclaw/windows-server",
+  "version": "2026.7.18",
+  "description": "Windows Server connector for OpenClaw using PowerShell remoting over SSH or WinRM with safe diagnostics and approval-gated service actions.",
+  "type": "module",
+  "dependencies": {
+    "typebox": "1.1.39"
+  },
+  "devDependencies": {
+    "@openclaw/plugin-sdk": "workspace:*"
+  },
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "compat": {
+      "pluginApi": ">=2026.6.11"
+    },
+    "build": {
+      "openclawVersion": "2026.6.11"
+    }
+  }
+}
