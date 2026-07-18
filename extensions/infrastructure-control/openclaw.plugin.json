@@ -20,6 +20,9 @@
       "infra_patch_apply",
       "infra_rollback",
       "infra_audit_log"
+    ],
+    "trustedToolPolicies": [
+      "infrastructure-control.mutations"
     ]
   },
   "toolMetadata": {
