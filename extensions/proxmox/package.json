@@ -1,0 +1,23 @@
+{
+  "name": "@openclaw/proxmox",
+  "version": "2026.7.18",
+  "description": "Proxmox VE API integration for OpenClaw with inventory, guest status, allowlists, and approval-gated power actions.",
+  "type": "module",
+  "dependencies": {
+    "typebox": "1.1.39"
+  },
+  "devDependencies": {
+    "@openclaw/plugin-sdk": "workspace:*"
+  },
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "compat": {
+      "pluginApi": ">=2026.6.11"
+    },
+    "build": {
+      "openclawVersion": "2026.6.11"
+    }
+  }
+}
