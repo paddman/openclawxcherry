@@ -23,20 +23,24 @@ export default definePluginEntry({
       api.registerTool(factory, { optional: true });
     }
 
-    api.on("before_tool_call", (event) => {
-      if (!MUTATING_TOOLS.has(event.toolName)) return;
-      return {
-        requireApproval: {
-          title: "Approve infrastructure change",
-          description:
-            "This operation can modify one or more infrastructure targets. Review the persisted plan, target scope, concurrency, rollback coverage, and maintenance impact before approval.",
-          severity: "warning" as const,
-          timeoutMs: 120_000,
-          timeoutBehavior: "deny" as const,
-          allowedDecisions: ["allow-once", "deny"] as Array<"allow-once" | "deny">,
-          pluginId: api.id,
-        },
-      };
+    api.registerTrustedToolPolicy({
+      id: "infrastructure-control.mutations",
+      description: "Require operator approval before infrastructure mutations execute.",
+      evaluate(event) {
+        if (!MUTATING_TOOLS.has(event.toolName)) return;
+        return {
+          requireApproval: {
+            title: "Approve infrastructure change",
+            description:
+              "This operation can modify one or more infrastructure targets. Review the persisted plan, target scope, concurrency, rollback coverage, and maintenance impact before approval.",
+            severity: "warning" as const,
+            timeoutMs: 120_000,
+            timeoutBehavior: "deny" as const,
+            allowedDecisions: ["allow-once", "deny"] as Array<"allow-once" | "deny">,
+            pluginId: api.id,
+          },
+        };
+      },
     });
 
     let timer: NodeJS.Timeout | undefined;
