@@ -945,6 +945,16 @@ importers:
         specifier: workspace:*
         version: link:../..
 
+  extensions/linux-ssh:
+    dependencies:
+      typebox:
+        specifier: 1.1.39
+        version: 1.1.39
+    devDependencies:
+      '@openclaw/plugin-sdk':
+        specifier: workspace:*
+        version: link:../../packages/plugin-sdk
+
   extensions/litellm:
     devDependencies:
       '@openclaw/plugin-sdk':
@@ -1691,6 +1701,16 @@ importers:
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
 
+  extensions/vmware:
+    dependencies:
+      typebox:
+        specifier: 1.1.39
+        version: 1.1.39
+    devDependencies:
+      '@openclaw/plugin-sdk':
+        specifier: workspace:*
+        version: link:../../packages/plugin-sdk
+
   extensions/voice-call:
     dependencies:
       commander:
@@ -1772,6 +1792,16 @@ importers:
       openclaw:
         specifier: workspace:*
         version: link:../..
+
+  extensions/windows-server:
+    dependencies:
+      typebox:
+        specifier: 1.1.39
+        version: 1.1.39
+    devDependencies:
+      '@openclaw/plugin-sdk':
+        specifier: workspace:*
+        version: link:../../packages/plugin-sdk
 
   extensions/workboard:
     dependencies:
