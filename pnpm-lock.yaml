@@ -901,6 +901,19 @@ importers:
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
 
+  extensions/infrastructure-control:
+    dependencies:
+      typebox:
+        specifier: 1.1.39
+        version: 1.1.39
+    devDependencies:
+      '@openclaw/plugin-sdk':
+        specifier: workspace:*
+        version: link:../../packages/plugin-sdk
+      openclaw:
+        specifier: workspace:*
+        version: link:../..
+
   extensions/inworld:
     devDependencies:
       '@openclaw/plugin-sdk':
@@ -954,6 +967,9 @@ importers:
       '@openclaw/plugin-sdk':
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
+      openclaw:
+        specifier: workspace:*
+        version: link:../..
 
   extensions/litellm:
     devDependencies:
@@ -1353,6 +1369,9 @@ importers:
       '@openclaw/plugin-sdk':
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
+      openclaw:
+        specifier: workspace:*
+        version: link:../..
 
   extensions/qa-channel:
     dependencies:
@@ -1710,6 +1729,9 @@ importers:
       '@openclaw/plugin-sdk':
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
+      openclaw:
+        specifier: workspace:*
+        version: link:../..
 
   extensions/voice-call:
     dependencies:
@@ -1802,6 +1824,9 @@ importers:
       '@openclaw/plugin-sdk':
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
+      openclaw:
+        specifier: workspace:*
+        version: link:../..
 
   extensions/workboard:
     dependencies:
