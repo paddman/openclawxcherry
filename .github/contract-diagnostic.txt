@@ -5,52 +5,52 @@ $ node scripts/run-vitest.mjs run --config test/vitest/vitest.contracts-plugin.c
 
 [1m[30m[46m RUN [49m[39m[22m [36mv4.1.8 [39m[90m/home/runner/work/openclawxcherry/openclawxcherry[39m
 
- [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/plugin-sdk-package-contract-guardrails.test.ts [2m([22m[2m22 tests[22m[2m)[22m[33m 5909[2mms[22m[39m
-     [33m[2m✓[22m[39m keeps configured local-origin fetch helpers out of the public SSRF runtime [33m 444[2mms[22m[39m
-     [33m[2m✓[22m[39m keeps extension sources off deprecated plugin-sdk compatibility imports [33m 388[2mms[22m[39m
-     [33m[2m✓[22m[39m keeps extension test-api exports consumed [33m 809[2mms[22m[39m
-     [33m[2m✓[22m[39m keeps reserved SDK compatibility subpaths inside their owning bundled plugins [33m 331[2mms[22m[39m
- [31m❯[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/plugin-sdk-runtime-api-guardrails.test.ts [2m([22m[2m6 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 23[2mms[22m[39m
-[31m     [31m×[31m keeps runtime api surfaces classified and guarded exports pinned[39m[32m 12[2mms[22m[39m
-     [32m✓[39m keeps bundled runtime api barrels off their own branded sdk facades[32m 4[2mms[22m[39m
+ [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/plugin-sdk-package-contract-guardrails.test.ts [2m([22m[2m22 tests[22m[2m)[22m[33m 5902[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps configured local-origin fetch helpers out of the public SSRF runtime [33m 463[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps extension sources off deprecated plugin-sdk compatibility imports [33m 377[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps extension test-api exports consumed [33m 849[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps reserved SDK compatibility subpaths inside their owning bundled plugins [33m 327[2mms[22m[39m
+ [31m❯[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/plugin-sdk-runtime-api-guardrails.test.ts [2m([22m[2m6 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 20[2mms[22m[39m
+[31m     [31m×[31m keeps runtime api surfaces classified and guarded exports pinned[39m[32m 9[2mms[22m[39m
+     [32m✓[39m keeps bundled runtime api barrels off their own branded sdk facades[32m 3[2mms[22m[39m
      [32m✓[39m keeps the composed hook-runner registry internal[32m 0[2mms[22m[39m
      [32m✓[39m keeps Slack's narrow runtime-setter entrypoint pinned to a single export[32m 5[2mms[22m[39m
      [32m✓[39m keeps Matrix's narrow runtime-setter entrypoint pinned to a single export[32m 1[2mms[22m[39m
      [32m✓[39m keeps Feishu's narrow runtime-setter entrypoint pinned to a single export[32m 0[2mms[22m[39m
- [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/session-entry-projection.contract.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 96[2mms[22m[39m
+ [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/session-entry-projection.contract.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 91[2mms[22m[39m
  [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/plugin-sdk-root-alias.test.ts [2m([22m[2m31 tests[22m[2m)[22m[32m 31[2mms[22m[39m
  [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/session-actions.contract.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 29[2mms[22m[39m
- [31m❯[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/boundary-invariants.test.ts [2m([22m[2m14 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 1193[2mms[22m[39m
-     [32m✓[39m lists boundary invariant source files without walking roots in-process[32m 23[2mms[22m[39m
+ [31m❯[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/boundary-invariants.test.ts [2m([22m[2m14 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 1243[2mms[22m[39m
+     [32m✓[39m lists boundary invariant source files without walking roots in-process[32m 26[2mms[22m[39m
      [32m✓[39m keeps bundled-capability-metadata confined to contract/test inventory[32m 0[2mms[22m[39m
-     [32m✓[39m keeps the bundled contract inventory out of non-test runtime code[32m 32[2mms[22m[39m
-     [33m[2m✓[22m[39m keeps core tests off bundled extension deep imports [33m 696[2mms[22m[39m
-     [32m✓[39m keeps plugin contract tests off bundled path helpers unless the test is explicitly about paths[32m 11[2mms[22m[39m
-     [32m✓[39m keeps channel production code off bundled-plugin-metadata helpers[32m 11[2mms[22m[39m
-     [32m✓[39m keeps contract loaders off hand-built bundled extension paths[32m 15[2mms[22m[39m
-     [32m✓[39m keeps bundled plugin production code off legacy before_agent_start hooks[32m 95[2mms[22m[39m
-[31m     [31m×[31m keeps bundled plugin typed hook registrations on an explicit allowlist[39m[32m 16[2mms[22m[39m
+     [32m✓[39m keeps the bundled contract inventory out of non-test runtime code[32m 36[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps core tests off bundled extension deep imports [33m 707[2mms[22m[39m
+     [32m✓[39m keeps plugin contract tests off bundled path helpers unless the test is explicitly about paths[32m 12[2mms[22m[39m
+     [32m✓[39m keeps channel production code off bundled-plugin-metadata helpers[32m 12[2mms[22m[39m
+     [32m✓[39m keeps contract loaders off hand-built bundled extension paths[32m 17[2mms[22m[39m
+     [32m✓[39m keeps bundled plugin production code off legacy before_agent_start hooks[32m 100[2mms[22m[39m
+[31m     [31m×[31m keeps bundled plugin typed hook registrations on an explicit allowlist[39m[32m 19[2mms[22m[39m
      [32m✓[39m keeps bundled plugin typed hook names on an explicit allowlist[32m 1[2mms[22m[39m
-     [32m✓[39m keeps bundled plugin production code off raw registerHook calls[32m 17[2mms[22m[39m
+     [32m✓[39m keeps bundled plugin production code off raw registerHook calls[32m 19[2mms[22m[39m
      [32m✓[39m keeps long-lived bundled hook handlers on live runtime config lookups[32m 0[2mms[22m[39m
      [32m✓[39m keeps live provider config surfaces on runtime config lookups[32m 0[2mms[22m[39m
      [32m✓[39m keeps long-lived bundled hook handlers off startup-only registration gates[32m 0[2mms[22m[39m
- [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/registry.retry.test.ts [2m([22m[2m6 tests[22m[2m)[22m[33m 432[2mms[22m[39m
+ [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/registry.retry.test.ts [2m([22m[2m6 tests[22m[2m)[22m[33m 443[2mms[22m[39m
  [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/config-footprint-guardrails.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 5[2mms[22m[39m
- [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/runtime-seams.contract.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 54[2mms[22m[39m
+ [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/runtime-seams.contract.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 50[2mms[22m[39m
  [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/memory-embedding-provider.contract.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 3[2mms[22m[39m
- [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/provider-catalog-deprecation.contract.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 155[2mms[22m[39m
- [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/plugin-sdk-index.bundle.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 780[2mms[22m[39m
-     [33m[2m✓[22m[39m emits importable bundled subpath entries [33m 776[2mms[22m[39m
- [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/runtime-import-side-effects.contract.test.ts [2m([22m[2m9 tests[22m[2m)[22m[33m 560[2mms[22m[39m
- [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/core-extension-facade-boundary.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 361[2mms[22m[39m
+ [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/provider-catalog-deprecation.contract.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 174[2mms[22m[39m
+ [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/plugin-sdk-index.bundle.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 764[2mms[22m[39m
+     [33m[2m✓[22m[39m emits importable bundled subpath entries [33m 760[2mms[22m[39m
+ [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/runtime-import-side-effects.contract.test.ts [2m([22m[2m9 tests[22m[2m)[22m[33m 564[2mms[22m[39m
+ [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/core-extension-facade-boundary.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 404[2mms[22m[39m
  [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/embedding-provider.contract.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 2[2mms[22m[39m
- [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/package-manifest.contract.test.ts [2m([22m[2m41 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/package-manifest.contract.test.ts [2m([22m[2m41 tests[22m[2m)[22m[32m 16[2mms[22m[39m
  [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/bundled-extension-config-api-guardrails.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 1[2mms[22m[39m
- [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/providers.contract.test.ts [2m([22m[2m42 tests[22m[2m)[22m[33m 12219[2mms[22m[39m
-     [33m[2m✓[22m[39m loads bundled web search providers [33m 1120[2mms[22m[39m
-     [33m[2m✓[22m[39m loads bundled web search providers [33m 10831[2mms[22m[39m
- [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/plugin-registration.contract.test.ts [2m([22m[2m90 tests[22m[2m)[22m[32m 199[2mms[22m[39m
+ [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/providers.contract.test.ts [2m([22m[2m42 tests[22m[2m)[22m[33m 12708[2mms[22m[39m
+     [33m[2m✓[22m[39m loads bundled web search providers [33m 1123[2mms[22m[39m
+     [33m[2m✓[22m[39m loads bundled web search providers [33m 11311[2mms[22m[39m
+ [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/plugin-registration.contract.test.ts [2m([22m[2m90 tests[22m[2m)[22m[32m 201[2mms[22m[39m
  [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/web-fetch-provider.contract.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 58[2mms[22m[39m
  [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/wizard.choice-resolution.contract.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 1[2mms[22m[39m
  [32m✓[39m [30m[46m contracts-plugin [49m[39m src/plugins/contracts/wizard.setup-options.contract.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 1[2mms[22m[39m
@@ -146,8 +146,8 @@ $ node scripts/run-vitest.mjs run --config test/vitest/vitest.contracts-plugin.c
 
 [2m Test Files [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m20 passed[39m[22m[90m (22)[39m
 [2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m319 passed[39m[22m[90m (321)[39m
-[2m   Start at [22m 11:47:36
-[2m   Duration [22m 40.08s[2m (transform 12.67s, setup 156ms, import 17.45s, tests 22.13s, environment 0ms)[22m
+[2m   Start at [22m 11:52:19
+[2m   Duration [22m 41.42s[2m (transform 13.40s, setup 160ms, import 18.18s, tests 22.71s, environment 0ms)[22m
 
 
 ::error file=/home/runner/work/openclawxcherry/openclawxcherry/src/plugins/contracts/boundary-invariants.test.ts,title=[contracts-plugin] src/plugins/contracts/boundary-invariants.test.ts > plugin contract boundary invariants > keeps bundled plugin typed hook registrations on an explicit allowlist,line=382,column=35::AssertionError: expected [ 'extensions/acpx/index.ts', …(10) ] to deeply equal [ 'extensions/acpx/index.ts', …(9) ]%0A%0A- Expected%0A+ Received%0A%0A@@ -1,8 +1,9 @@%0A  [%0A    "extensions/acpx/index.ts",%0A    "extensions/active-memory/index.ts",%0A+   "extensions/cherry-cognitive/index.ts",%0A    "extensions/codex/index.ts",%0A    "extensions/diffs/src/plugin.ts",%0A    "extensions/discord/subagent-hooks-api.ts",%0A    "extensions/feishu/subagent-hooks-api.ts",%0A    "extensions/matrix/subagent-hooks-api.ts",%0A%0A ❯ src/plugins/contracts/boundary-invariants.test.ts:382:35%0A%0A
