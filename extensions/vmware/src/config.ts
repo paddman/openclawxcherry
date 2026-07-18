@@ -9,6 +9,7 @@ export type VmwareConfig = {
   timeoutMs: number;
   allowMutations: boolean;
   allowedVmPaths: string[];
+  allowedHostPaths: string[];
   maxResults: number;
 };
 
@@ -51,9 +52,7 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
   if (url.protocol !== "https:" && url.protocol !== "http:") {
     throw new Error("VMware baseUrl must use http or https");
   }
-  if (url.username || url.password) {
-    throw new Error("Do not embed credentials in VMware baseUrl");
-  }
+  if (url.username || url.password) throw new Error("Do not embed credentials in VMware baseUrl");
   url.search = "";
   url.hash = "";
   url.pathname = url.pathname.replace(/\/+$/u, "");
@@ -64,7 +63,9 @@ export function parseVmwareConfig(value: unknown): VmwareConfig {
   const raw = objectValue(value);
   return {
     baseUrl: normalizeBaseUrl(
-      optionalString(raw.baseUrl) ?? optionalString(process.env.VMWARE_BASE_URL) ?? optionalString(process.env.GOVC_URL),
+      optionalString(raw.baseUrl) ??
+        optionalString(process.env.VMWARE_BASE_URL) ??
+        optionalString(process.env.GOVC_URL),
     ),
     username:
       optionalString(raw.username) ??
@@ -74,7 +75,8 @@ export function parseVmwareConfig(value: unknown): VmwareConfig {
       optionalString(raw.password) ??
       optionalString(process.env.VMWARE_PASSWORD) ??
       optionalString(process.env.GOVC_PASSWORD),
-    govcPath: optionalString(raw.govcPath) ?? optionalString(process.env.VMWARE_GOVC_PATH) ?? "govc",
+    govcPath:
+      optionalString(raw.govcPath) ?? optionalString(process.env.VMWARE_GOVC_PATH) ?? "govc",
     verifyTls: booleanValue(
       raw.verifyTls,
       process.env.VMWARE_VERIFY_TLS !== "false" && process.env.GOVC_INSECURE !== "1",
@@ -93,6 +95,10 @@ export function parseVmwareConfig(value: unknown): VmwareConfig {
       process.env.VMWARE_ALLOW_MUTATIONS === "true",
     ),
     allowedVmPaths: stringList(raw.allowedVmPaths, process.env.VMWARE_ALLOWED_VM_PATHS),
+    allowedHostPaths: stringList(
+      raw.allowedHostPaths,
+      process.env.VMWARE_ALLOWED_HOST_PATHS,
+    ),
     maxResults: integerValue(raw.maxResults, 200, 1, 2_000),
   };
 }

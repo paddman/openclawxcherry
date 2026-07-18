@@ -1,4 +1,8 @@
 import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
+import {
+  registerWindowsInfrastructureProvider,
+  WindowsPatchOperations,
+} from "./runtime-api.js";
 import { WindowsServerClient } from "./src/client.js";
 import { parseWindowsServerConfig } from "./src/config.js";
 import { createWindowsServerToolFactories } from "./src/tools.js";
@@ -7,9 +11,12 @@ export default definePluginEntry({
   id: "windows-server",
   name: "Windows Server",
   description:
-    "Manage Windows Server through PowerShell remoting over cross-platform SSH or Windows-hosted WinRM, with bounded diagnostics and approval-gated service actions.",
+    "Manage Windows Server through SSH or Windows-hosted WinRM with diagnostics, monitoring, Windows Update, and approval-gated service actions.",
   register(api) {
-    const client = new WindowsServerClient(parseWindowsServerConfig(api.pluginConfig));
+    const config = parseWindowsServerConfig(api.pluginConfig);
+    const client = new WindowsServerClient(config);
+    const operations = new WindowsPatchOperations(client, config);
+    let unregisterProvider: (() => void) | undefined;
 
     for (const factory of createWindowsServerToolFactories(client)) {
       api.registerTool(factory, { optional: true });
@@ -21,7 +28,7 @@ export default definePluginEntry({
         requireApproval: {
           title: "Approve Windows service action",
           description:
-            "This operation changes a service on a remote Windows Server. Verify the host, service, action, dependencies, and production impact before approval.",
+            "This operation changes a remote Windows service. Verify the host, service, dependencies, and production impact.",
           severity: "warning" as const,
           timeoutMs: 60_000,
           timeoutBehavior: "deny" as const,
@@ -36,12 +43,19 @@ export default definePluginEntry({
       start(ctx) {
         const status = client.getConfigurationStatus();
         if (status.configured) {
+          unregisterProvider?.();
+          unregisterProvider = registerWindowsInfrastructureProvider(operations);
           ctx.logger.info(`Windows Server plugin configured for ${status.hosts.length} host(s)`);
         } else {
-          ctx.logger.warn(`Windows Server plugin enabled but not configured: ${status.problems.join("; ")}`);
+          ctx.logger.warn(
+            `Windows Server plugin enabled but not configured: ${status.problems.join("; ")}`,
+          );
         }
       },
-      stop() {},
+      stop() {
+        unregisterProvider?.();
+        unregisterProvider = undefined;
+      },
     });
   },
 });

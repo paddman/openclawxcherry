@@ -1,8 +1,8 @@
 {
-  "name": "@openclaw/windows-server",
+  "name": "@openclaw/infrastructure-control",
   "version": "2026.6.11",
   "private": true,
-  "description": "Windows Server connector for OpenClaw with diagnostics, service management, event logs, patch scanning, and approval-gated patching.",
+  "description": "Unified infrastructure inventory, monitoring, alerts, patching, bulk change plans, rollback, and audit for OpenClaw.",
   "type": "module",
   "dependencies": {
     "typebox": "1.1.39"
@@ -15,9 +15,13 @@
     "openclaw": ">=2026.6.11"
   },
   "peerDependenciesMeta": {
-    "openclaw": { "optional": true }
+    "openclaw": {
+      "optional": true
+    }
   },
   "openclaw": {
-    "extensions": ["./index.ts"]
+    "extensions": [
+      "./index.ts"
+    ]
   }
 }

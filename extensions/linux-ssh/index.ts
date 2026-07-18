@@ -1,4 +1,8 @@
 import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
+import {
+  LinuxPatchOperations,
+  registerLinuxInfrastructureProvider,
+} from "./runtime-api.js";
 import { LinuxSshClient } from "./src/client.js";
 import { parseLinuxSshConfig } from "./src/config.js";
 import { createLinuxSshToolFactories } from "./src/tools.js";
@@ -7,9 +11,12 @@ export default definePluginEntry({
   id: "linux-ssh",
   name: "Linux SSH",
   description:
-    "Manage configured Linux servers through key-based OpenSSH with fixed read-only diagnostics and approval-gated systemd service actions.",
+    "Manage Linux servers through key-based OpenSSH with diagnostics, monitoring, patch management, and approval-gated service actions.",
   register(api) {
-    const client = new LinuxSshClient(parseLinuxSshConfig(api.pluginConfig));
+    const config = parseLinuxSshConfig(api.pluginConfig);
+    const client = new LinuxSshClient(config);
+    const operations = new LinuxPatchOperations(client, config);
+    let unregisterProvider: (() => void) | undefined;
 
     for (const factory of createLinuxSshToolFactories(client)) {
       api.registerTool(factory, { optional: true });
@@ -21,7 +28,7 @@ export default definePluginEntry({
         requireApproval: {
           title: "Approve Linux service action",
           description:
-            "This operation changes a systemd service on a remote Linux host. Verify the host, unit name, action, dependency impact, and maintenance window before approval.",
+            "This operation changes a systemd service on a remote Linux host. Verify the host, unit, dependencies, and maintenance window.",
           severity: "warning" as const,
           timeoutMs: 60_000,
           timeoutBehavior: "deny" as const,
@@ -36,12 +43,19 @@ export default definePluginEntry({
       start(ctx) {
         const status = client.getConfigurationStatus();
         if (status.configured) {
+          unregisterProvider?.();
+          unregisterProvider = registerLinuxInfrastructureProvider(operations);
           ctx.logger.info(`Linux SSH plugin configured for ${status.hosts.length} host(s)`);
         } else {
-          ctx.logger.warn(`Linux SSH plugin enabled but not configured: ${status.problems.join("; ")}`);
+          ctx.logger.warn(
+            `Linux SSH plugin enabled but not configured: ${status.problems.join("; ")}`,
+          );
         }
       },
-      stop() {},
+      stop() {
+        unregisterProvider?.();
+        unregisterProvider = undefined;
+      },
     });
   },
 });

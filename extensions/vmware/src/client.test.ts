@@ -11,19 +11,22 @@ const baseConfig: VmwareConfig = {
   timeoutMs: 10_000,
   allowMutations: false,
   allowedVmPaths: ["/DC01/vm/Managed"],
+  allowedHostPaths: ["/DC01/host/Cluster01"],
   maxResults: 100,
 };
 
-function runner(handler: (args: string[]) => { stdout: string; stderr?: string; exitCode?: number }): CommandRunner {
+function runner(
+  handler: (args: string[]) => { stdout: string; stderr?: string; exitCode?: number },
+): CommandRunner {
   return async (_command, args, options) => {
     expect(options.env.GOVC_URL).toBe(baseConfig.baseUrl);
     expect(options.env.GOVC_USERNAME).toBe(baseConfig.username);
     expect(options.env.GOVC_PASSWORD).toBe(baseConfig.password);
-    const result = handler(args);
+    const response = handler(args);
     return {
-      stdout: result.stdout,
-      stderr: result.stderr ?? "",
-      exitCode: result.exitCode ?? 0,
+      stdout: response.stdout,
+      stderr: response.stderr ?? "",
+      exitCode: response.exitCode ?? 0,
     };
   };
 }
@@ -32,21 +35,20 @@ describe("VmwareClient", () => {
   it("reports vSphere 6.x compatibility from govc about", async () => {
     const client = new VmwareClient(
       baseConfig,
-      runner((args) => {
-        if (args[0] === "about") {
-          return {
-            stdout: JSON.stringify({
-              About: {
-                Name: "VMware vCenter Server",
-                Version: "6.7.0",
-                ApiVersion: "6.7.3",
-                Build: "12345",
-              },
-            }),
-          };
-        }
-        return { stdout: "govc 0.52.0" };
-      }),
+      runner((args) =>
+        args[0] === "about"
+          ? {
+              stdout: JSON.stringify({
+                About: {
+                  Name: "VMware vCenter Server",
+                  Version: "6.7.0",
+                  ApiVersion: "6.7.3",
+                  Build: "12345",
+                },
+              }),
+            }
+          : { stdout: "govc 0.52.0" },
+      ),
     );
     const connection = await client.testConnection();
     expect(connection.supportedMajorRange).toBe(true);
