@@ -20,11 +20,20 @@ jobs:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-24.04
     steps:
-      - name: Checkout branch
+      - name: Checkout lockfile inputs
         uses: actions/checkout@v4
         with:
           ref: feature/proxmox-integration
           fetch-depth: 1
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /package.json
+            /pnpm-lock.yaml
+            /pnpm-workspace.yaml
+            /patches/
+            /extensions/*/package.json
+            /packages/*/package.json
+            /ui/package.json
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
