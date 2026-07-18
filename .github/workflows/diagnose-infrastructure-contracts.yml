@@ -1,4 +1,5 @@
 name: Apply infrastructure contract fixes
+run-name: Apply infrastructure contract fixes for PR ${{ github.event.pull_request.number || 'branch' }}
 
 on:
   push:
