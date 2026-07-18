@@ -13,6 +13,9 @@
       "windows_service_status",
       "windows_event_logs",
       "windows_service_action"
+    ],
+    "trustedToolPolicies": [
+      "windows-server.service-actions"
     ]
   },
   "toolMetadata": {
