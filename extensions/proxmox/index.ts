@@ -22,20 +22,24 @@ export default definePluginEntry({
       api.registerTool(factory, { optional: true });
     }
 
-    api.on("before_tool_call", (event) => {
-      if (event.toolName !== "proxmox_guest_action") return;
-      return {
-        requireApproval: {
-          title: "Approve Proxmox power action",
-          description:
-            "This operation changes a virtual machine or container power state. Verify the VMID, node, action, and production impact.",
-          severity: "warning" as const,
-          timeoutMs: 60_000,
-          timeoutBehavior: "deny" as const,
-          allowedDecisions: ["allow-once", "deny"] as Array<"allow-once" | "deny">,
-          pluginId: api.id,
-        },
-      };
+    api.registerTrustedToolPolicy({
+      id: "proxmox.guest-power",
+      description: "Require operator approval before Proxmox guest power actions.",
+      evaluate(event) {
+        if (event.toolName !== "proxmox_guest_action") return;
+        return {
+          requireApproval: {
+            title: "Approve Proxmox power action",
+            description:
+              "This operation changes a virtual machine or container power state. Verify the VMID, node, action, and production impact.",
+            severity: "warning" as const,
+            timeoutMs: 60_000,
+            timeoutBehavior: "deny" as const,
+            allowedDecisions: ["allow-once", "deny"] as Array<"allow-once" | "deny">,
+            pluginId: api.id,
+          },
+        };
+      },
     });
 
     api.registerService({
