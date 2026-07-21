@@ -55,9 +55,10 @@ function parseArgs(argv) {
 }
 
 function run(command, args, options = {}) {
+  const piped = options.capture || options.input !== undefined;
   const result = spawnSync(command, args, {
     encoding: "utf8",
-    stdio: options.capture ? "pipe" : "inherit",
+    stdio: piped ? ["pipe", "pipe", "pipe"] : "inherit",
     input: options.input,
     env: process.env,
   });
@@ -65,8 +66,14 @@ function run(command, args, options = {}) {
   if (result.error) {
     throw new Error(`${command} could not start: ${result.error.message}`);
   }
+
+  if (piped && !options.capture) {
+    if (result.stdout) process.stdout.write(result.stdout);
+    if (result.stderr) process.stderr.write(result.stderr);
+  }
+
   if (result.status !== 0 && !options.allowFailure) {
-    const detail = options.capture ? (result.stderr || result.stdout || "").trim() : "";
+    const detail = piped ? (result.stderr || result.stdout || "").trim() : "";
     throw new Error(`${command} ${args.join(" ")} failed${detail ? `: ${detail}` : ""}`);
   }
   return result;
@@ -102,7 +109,13 @@ function readJsonConfig(path, fallback) {
 }
 
 function uniqueStrings(values) {
-  return [...new Set(values.filter((value) => typeof value === "string" && value.trim()).map((value) => value.trim()))];
+  return [
+    ...new Set(
+      values
+        .filter((value) => typeof value === "string" && value.trim())
+        .map((value) => value.trim()),
+    ),
+  ];
 }
 
 function buildPatch({ existingAllowedAgents, allowWrite, makeDefault }) {
@@ -143,9 +156,13 @@ function printNextSteps({ allowWrite }) {
   console.log("  /acp doctor");
   console.log("  /acp spawn cline --bind here");
   if (allowWrite) {
-    console.log("\nCline write/exec approval is enabled. Use a dedicated repository workspace or sandbox.");
+    console.log(
+      "\nCline write/exec approval is enabled. Use a dedicated repository workspace or sandbox.",
+    );
   } else {
-    console.log("\nCline is read-only. Re-run with --allow-write when the isolated workspace is ready.");
+    console.log(
+      "\nCline is read-only. Re-run with --allow-write when the isolated workspace is ready.",
+    );
   }
 }
 
@@ -179,9 +196,8 @@ function main() {
     return;
   }
 
-  // The plugin install is idempotent on supported OpenClaw releases. Continue
-  // to schema validation if an existing bundled/workspace plugin reports a
-  // non-zero status.
+  // Continue to schema validation if an existing bundled/workspace ACPX plugin
+  // reports a non-zero status during package installation.
   run(executable("openclaw"), ["plugins", "install", "@openclaw/acpx"], {
     allowFailure: true,
   });
