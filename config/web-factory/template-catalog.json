@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "defaultTemplate": "studio-admin",
+  "allowedLicenses": ["MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "ISC"],
+  "templates": [
+    {
+      "id": "studio-admin",
+      "name": "Studio Admin",
+      "repository": "arhamkhnz/next-shadcn-admin-dashboard",
+      "cloneUrl": "https://github.com/arhamkhnz/next-shadcn-admin-dashboard.git",
+      "ref": "main",
+      "license": "MIT",
+      "packageVersion": "2.2.0",
+      "curatedScore": 96,
+      "verifiedAt": "2026-07-21",
+      "categories": [
+        "admin-dashboard",
+        "enterprise",
+        "internal-tool",
+        "infrastructure",
+        "saas"
+      ],
+      "stack": [
+        "Next.js 16",
+        "React 19",
+        "TypeScript",
+        "Tailwind CSS 4",
+        "shadcn/ui",
+        "TanStack Table",
+        "Recharts",
+        "Zod",
+        "Zustand"
+      ],
+      "strengths": [
+        "Responsive application shell and collapsible sidebar",
+        "Multiple dashboard layouts including infrastructure",
+        "Authentication, users, roles, tables, charts, calendar, tasks and forms",
+        "Theme presets with light and dark modes",
+        "Modern colocation-based application structure"
+      ],
+      "importPolicy": {
+        "removeUpstreamGit": true,
+        "removeUpstreamWorkflows": true,
+        "preserveLicense": true,
+        "installWithScripts": false
+      }
+    }
+  ]
+}
