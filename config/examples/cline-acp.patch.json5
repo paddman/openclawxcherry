@@ -1,0 +1,38 @@
+{
+  // Merge this file into openclaw.json with:
+  // openclaw config patch --file ./config/examples/cline-acp.patch.json5 --dry-run
+  // openclaw config patch --file ./config/examples/cline-acp.patch.json5
+  //
+  // This preset gives Cline read-only approval by default. For coding tasks that
+  // must edit files or run commands, use scripts/setup-cline-acp.mjs --allow-write
+  // inside a dedicated workspace or sandbox.
+  acp: {
+    enabled: true,
+    dispatch: {
+      enabled: true,
+    },
+    backend: "acpx",
+    allowedAgents: ["cline"],
+    runtime: {
+      ttlMinutes: 120,
+    },
+  },
+  plugins: {
+    entries: {
+      acpx: {
+        enabled: true,
+        config: {
+          agents: {
+            cline: {
+              command: "cline",
+              args: ["--acp"],
+            },
+          },
+          probeAgent: "cline",
+          permissionMode: "approve-reads",
+          nonInteractivePermissions: "deny",
+        },
+      },
+    },
+  },
+}
