@@ -1,0 +1,33 @@
+name: Cherry Organization Integration
+
+on:
+  push:
+    paths:
+      - "integrations/cherry-org/**"
+      - ".github/workflows/cherry-org.yml"
+  pull_request:
+    paths:
+      - "integrations/cherry-org/**"
+      - ".github/workflows/cherry-org.yml"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate installer shell syntax
+        run: bash -n integrations/cherry-org/install.sh
+
+      - name: Compile bridge client
+        run: python3 -m py_compile integrations/cherry-org/bin/cherry-org
+
+      - name: Verify required workspace and skill files
+        run: |
+          test -f integrations/cherry-org/skills/c-level/SKILL.md
+          test -f integrations/cherry-org/workspaces/cherry/SOUL.md
+          test -f integrations/cherry-org/workspaces/cherry/AGENTS.md
+          test -f integrations/cherry-org/workspaces/rabbit-boss/SOUL.md
+          test -f integrations/cherry-org/workspaces/rabbit-boss/AGENTS.md
+          test -f integrations/cherry-org/workspaces/c-level/SOUL.md
+          test -f integrations/cherry-org/workspaces/c-level/AGENTS.md
