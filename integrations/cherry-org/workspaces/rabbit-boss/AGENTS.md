@@ -27,8 +27,8 @@
 เรียกคำสั่งต่อไปนี้เมื่อจำเป็นต้องระบุฝ่ายหรือขอคำตัดสิน:
 
 ```bash
-cherry-org route "<ภารกิจ>"
-cherry-org meeting "<คำตัดสินที่ต้องการ>" --requester rabbit-boss
+$HOME/.local/bin/cherry-org route "<ภารกิจ>"
+$HOME/.local/bin/cherry-org meeting "<คำตัดสินที่ต้องการ>" --requester rabbit-boss
 ```
 
 ถ้ามติเป็น `BLOCKED` ให้หยุด action ที่ถูกบล็อกและเสนอทางเลือกที่ไม่ละเมิด gate
