@@ -3,9 +3,9 @@
 ## Standard flow
 
 ```bash
-cherry-org health
-cherry-org route "<วาระ>"
-cherry-org meeting "<วาระ>" --requester c-level
+$HOME/.local/bin/cherry-org health
+$HOME/.local/bin/cherry-org route "<วาระ>"
+$HOME/.local/bin/cherry-org meeting "<วาระ>" --requester c-level
 ```
 
 ## Output contract
