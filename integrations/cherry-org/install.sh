@@ -137,10 +137,12 @@ openclaw config set 'agents.entries.main.model' 'deepseek/deepseek-v4-flash'
 openclaw config set 'agents.entries.main.subagents.allowAgents' '["rabbit-boss","c-level"]' --strict-json
 openclaw config set 'agents.entries.main.subagents.requireAgentId' true --strict-json
 openclaw config set 'agents.entries.main.tools.profile' 'messaging'
+openclaw config set 'agents.entries.main.tools.alsoAllow' '["exec"]' --strict-json
 openclaw config set 'agents.entries.rabbit-boss.subagents.allowAgents' '["c-level"]' --strict-json
 openclaw config set 'agents.entries.rabbit-boss.subagents.requireAgentId' true --strict-json
 openclaw config set 'agents.entries.rabbit-boss.tools.profile' 'coding'
 openclaw config set 'agents.entries.c-level.tools.profile' 'minimal'
+openclaw config set 'agents.entries.c-level.tools.alsoAllow' '["exec"]' --strict-json
 openclaw config set 'tools.exec.mode' 'auto'
 openclaw config set 'tools.exec.host' 'gateway'
 
