@@ -1,0 +1,82 @@
+{
+  "id": "infrastructure-control",
+  "activation": {
+    "onStartup": true
+  },
+  "name": "Infrastructure Control",
+  "description": "Unified inventory, monitoring, alerting, patch management, bulk operations, change plans, rollback, and audit.",
+  "contracts": {
+    "tools": [
+      "infra_providers",
+      "infra_provider_query",
+      "infra_inventory_search",
+      "infra_monitoring_scan",
+      "infra_patch_scan",
+      "infra_change_plan_create",
+      "infra_bulk_plan",
+      "infra_change_plan_get",
+      "infra_change_plan_execute",
+      "infra_bulk_execute",
+      "infra_patch_apply",
+      "infra_rollback",
+      "infra_audit_log"
+    ],
+    "trustedToolPolicies": [
+      "infrastructure-control.mutations"
+    ]
+  },
+  "toolMetadata": {
+    "infra_providers": { "optional": true },
+    "infra_provider_query": { "optional": true },
+    "infra_inventory_search": { "optional": true },
+    "infra_monitoring_scan": { "optional": true },
+    "infra_patch_scan": { "optional": true },
+    "infra_change_plan_create": { "optional": true },
+    "infra_bulk_plan": { "optional": true },
+    "infra_change_plan_get": { "optional": true },
+    "infra_change_plan_execute": { "optional": true },
+    "infra_bulk_execute": { "optional": true },
+    "infra_patch_apply": { "optional": true },
+    "infra_rollback": { "optional": true },
+    "infra_audit_log": { "optional": true }
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "allowMutations": { "type": "boolean", "default": false },
+      "stateDir": { "type": "string" },
+      "auditLogFile": { "type": "string" },
+      "maxConcurrency": { "type": "integer", "minimum": 1, "maximum": 25, "default": 5 },
+      "maxInventoryResults": { "type": "integer", "minimum": 10, "maximum": 10000, "default": 1000 },
+      "monitoringIntervalSeconds": { "type": "integer", "minimum": 0, "maximum": 86400, "default": 0 },
+      "alertCooldownMinutes": { "type": "integer", "minimum": 1, "maximum": 10080, "default": 30 },
+      "thresholds": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "cpuWarningPercent": { "type": "number", "minimum": 1, "maximum": 100, "default": 80 },
+          "cpuCriticalPercent": { "type": "number", "minimum": 1, "maximum": 100, "default": 95 },
+          "memoryWarningPercent": { "type": "number", "minimum": 1, "maximum": 100, "default": 80 },
+          "memoryCriticalPercent": { "type": "number", "minimum": 1, "maximum": 100, "default": 95 },
+          "diskWarningPercent": { "type": "number", "minimum": 1, "maximum": 100, "default": 85 },
+          "diskCriticalPercent": { "type": "number", "minimum": 1, "maximum": 100, "default": 95 }
+        }
+      },
+      "alertWebhooks": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["url"],
+          "properties": {
+            "id": { "type": "string" },
+            "url": { "type": "string" },
+            "tokenEnv": { "type": "string" },
+            "minimumSeverity": { "type": "string", "enum": ["warning", "critical"], "default": "warning" }
+          }
+        }
+      }
+    }
+  }
+}

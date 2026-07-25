@@ -1,0 +1,23 @@
+{
+  "name": "@openclaw/windows-server",
+  "version": "2026.6.11",
+  "private": true,
+  "description": "Windows Server connector for OpenClaw with diagnostics, service management, event logs, patch scanning, and approval-gated patching.",
+  "type": "module",
+  "dependencies": {
+    "typebox": "1.1.39"
+  },
+  "devDependencies": {
+    "@openclaw/plugin-sdk": "workspace:*",
+    "openclaw": "workspace:*"
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.6.11"
+  },
+  "peerDependenciesMeta": {
+    "openclaw": { "optional": true }
+  },
+  "openclaw": {
+    "extensions": ["./index.ts"]
+  }
+}

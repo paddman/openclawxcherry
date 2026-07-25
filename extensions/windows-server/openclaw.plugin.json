@@ -1,0 +1,79 @@
+{
+  "id": "windows-server",
+  "activation": {
+    "onStartup": true
+  },
+  "name": "Windows Server",
+  "description": "PowerShell-based Windows Server inventory, diagnostics, event logs, and approval-gated service management over SSH or WinRM.",
+  "contracts": {
+    "tools": [
+      "windows_hosts",
+      "windows_connection_test",
+      "windows_system_status",
+      "windows_service_status",
+      "windows_event_logs",
+      "windows_service_action"
+    ],
+    "trustedToolPolicies": [
+      "windows-server.service-actions"
+    ]
+  },
+  "toolMetadata": {
+    "windows_hosts": { "optional": true },
+    "windows_connection_test": { "optional": true },
+    "windows_system_status": { "optional": true },
+    "windows_service_status": { "optional": true },
+    "windows_event_logs": { "optional": true },
+    "windows_service_action": { "optional": true }
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "sshPath": { "type": "string", "default": "ssh" },
+      "powershellPath": { "type": "string" },
+      "timeoutMs": { "type": "integer", "minimum": 1000, "maximum": 300000, "default": 30000 },
+      "maxOutputBytes": { "type": "integer", "minimum": 10000, "maximum": 10000000, "default": 2000000 },
+      "allowMutations": { "type": "boolean", "default": false },
+      "hosts": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "hostname", "username"],
+          "properties": {
+            "id": { "type": "string" },
+            "hostname": { "type": "string" },
+            "transport": {
+              "type": "string",
+              "enum": ["auto", "ssh", "winrm"],
+              "default": "auto"
+            },
+            "username": { "type": "string" },
+            "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+            "identityFile": { "type": "string" },
+            "knownHostsFile": { "type": "string" },
+            "strictHostKeyChecking": {
+              "type": "string",
+              "enum": ["yes", "accept-new", "no"],
+              "default": "yes"
+            },
+            "useSsl": { "type": "boolean", "default": true },
+            "passwordEnv": { "type": "string" },
+            "authentication": {
+              "type": "string",
+              "enum": ["Default", "Negotiate", "Kerberos", "Basic"],
+              "default": "Negotiate"
+            },
+            "allowedServices": {
+              "type": "array",
+              "items": { "type": "string" },
+              "default": []
+            }
+          }
+        },
+        "default": []
+      }
+    }
+  }
+}

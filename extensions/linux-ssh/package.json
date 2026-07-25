@@ -1,0 +1,23 @@
+{
+  "name": "@openclaw/linux-ssh",
+  "version": "2026.6.11",
+  "private": true,
+  "description": "Linux SSH connector for OpenClaw with diagnostics, service management, patch scanning, and approval-gated patching.",
+  "type": "module",
+  "dependencies": {
+    "typebox": "1.1.39"
+  },
+  "devDependencies": {
+    "@openclaw/plugin-sdk": "workspace:*",
+    "openclaw": "workspace:*"
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.6.11"
+  },
+  "peerDependenciesMeta": {
+    "openclaw": { "optional": true }
+  },
+  "openclaw": {
+    "extensions": ["./index.ts"]
+  }
+}

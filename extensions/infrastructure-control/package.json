@@ -1,0 +1,27 @@
+{
+  "name": "@openclaw/infrastructure-control",
+  "version": "2026.6.11",
+  "private": true,
+  "description": "Unified infrastructure inventory, monitoring, alerts, patching, bulk change plans, rollback, and audit for OpenClaw.",
+  "type": "module",
+  "dependencies": {
+    "typebox": "1.1.39"
+  },
+  "devDependencies": {
+    "@openclaw/plugin-sdk": "workspace:*",
+    "openclaw": "workspace:*"
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.6.11"
+  },
+  "peerDependenciesMeta": {
+    "openclaw": {
+      "optional": true
+    }
+  },
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

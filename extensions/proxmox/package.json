@@ -1,0 +1,25 @@
+{
+  "name": "@openclaw/proxmox",
+  "version": "2026.6.11",
+  "private": true,
+  "description": "Proxmox VE connector for OpenClaw with inventory, monitoring, snapshots, backups, migration, resize, and approval-gated operations.",
+  "type": "module",
+  "dependencies": {
+    "typebox": "1.1.39"
+  },
+  "devDependencies": {
+    "@openclaw/plugin-sdk": "workspace:*",
+    "openclaw": "workspace:*"
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.6.11"
+  },
+  "peerDependenciesMeta": {
+    "openclaw": {
+      "optional": true
+    }
+  },
+  "openclaw": {
+    "extensions": ["./index.ts"]
+  }
+}

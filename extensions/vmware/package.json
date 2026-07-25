@@ -1,0 +1,23 @@
+{
+  "name": "@openclaw/vmware",
+  "version": "2026.6.11",
+  "private": true,
+  "description": "VMware vSphere 6.x-9.x connector for OpenClaw using govc with inventory, monitoring, snapshots, clone, migration, resize, and approval-gated operations.",
+  "type": "module",
+  "dependencies": {
+    "typebox": "1.1.39"
+  },
+  "devDependencies": {
+    "@openclaw/plugin-sdk": "workspace:*",
+    "openclaw": "workspace:*"
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.6.11"
+  },
+  "peerDependenciesMeta": {
+    "openclaw": { "optional": true }
+  },
+  "openclaw": {
+    "extensions": ["./index.ts"]
+  }
+}
