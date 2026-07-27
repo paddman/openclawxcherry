@@ -102,19 +102,19 @@ Configure the extension under `plugins.entries.cherry-cognitive.config`.
 
 ### Configuration fields
 
-| Field | Default | Purpose |
-| --- | ---: | --- |
-| `enabled` | `true` | Enables the runtime and hooks. |
-| `identity` | `Cherry Cognitive Agent` | Identity shown in the functional self-model. |
-| `tickIntervalMs` | `5000` | Recurrent field update interval. Minimum 1 second. |
-| `persistIntervalMs` | `30000` | Atomic state save interval. |
-| `maxWorkingMemory` | `32` | Recent observations retained per session. |
-| `maxEpisodicMemory` | `256` | Episodes retained per session. |
-| `promptInjection` | `true` | Injects the current workspace and self-model before each agent turn. |
-| `heartbeatAwareness` | `true` | Adds the current state to heartbeat turns. |
-| `autoObserveMessages` | `true` | Converts inbound messages and attachment metadata into observations. |
-| `approvalRequiredTools` | `[]` | Exact tool names that require human approval before execution. |
-| `approvalTimeoutMs` | `60000` | Approval timeout. A timeout is denied. |
+| Field                   |                  Default | Purpose                                                              |
+| ----------------------- | -----------------------: | -------------------------------------------------------------------- |
+| `enabled`               |                   `true` | Enables the runtime and hooks.                                       |
+| `identity`              | `Cherry Cognitive Agent` | Identity shown in the functional self-model.                         |
+| `tickIntervalMs`        |                   `5000` | Recurrent field update interval. Minimum 1 second.                   |
+| `persistIntervalMs`     |                  `30000` | Atomic state save interval.                                          |
+| `maxWorkingMemory`      |                     `32` | Recent observations retained per session.                            |
+| `maxEpisodicMemory`     |                    `256` | Episodes retained per session.                                       |
+| `promptInjection`       |                   `true` | Injects the current workspace and self-model before each agent turn. |
+| `heartbeatAwareness`    |                   `true` | Adds the current state to heartbeat turns.                           |
+| `autoObserveMessages`   |                   `true` | Converts inbound messages and attachment metadata into observations. |
+| `approvalRequiredTools` |                     `[]` | Exact tool names that require human approval before execution.       |
+| `approvalTimeoutMs`     |                  `60000` | Approval timeout. A timeout is denied.                               |
 
 ## Agent tools
 
