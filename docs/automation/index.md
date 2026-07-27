@@ -1,9 +1,9 @@
 ---
 doc-schema-version: 1
-summary: "Overview of automation mechanisms: tasks, cron, hooks, standing orders, and Task Flow"
+summary: "Overview of automation mechanisms: tasks, cron, hooks, standing orders, Task Flow, and Autopilot"
 read_when:
   - Deciding how to automate work with OpenClaw
-  - Choosing between heartbeat, cron, commitments, hooks, and standing orders
+  - Choosing between heartbeat, cron, commitments, hooks, standing orders, and Autopilot
   - Looking for the right automation entry point
 title: "Automation"
 ---
@@ -22,6 +22,7 @@ flowchart TD
     START --> Q4{React to lifecycle events?}
     START --> Q5{Give the agent persistent instructions?}
     START --> Q6{Remember a natural follow-up?}
+    START --> Q7{Discover bounded idle work?}
 
     Q1 -->|Yes| Q1a{Exact timing or flexible?}
     Q1a -->|Exact| CRON["Scheduled Tasks (Cron)"]
@@ -32,23 +33,25 @@ flowchart TD
     Q4 -->|Yes| HOOKS[Hooks]
     Q5 -->|Yes| SO[Standing Orders]
     Q6 -->|Yes| COMMITMENTS[Inferred Commitments]
+    Q7 -->|Yes| AUTOPILOT[Autopilot]
 ```
 
-| Use case                                | Recommended            | Why                                              |
-| --------------------------------------- | ---------------------- | ------------------------------------------------ |
-| Send daily report at 9 AM sharp         | Scheduled Tasks (Cron) | Exact timing, isolated execution                 |
-| Remind me in 20 minutes                 | Scheduled Tasks (Cron) | One-shot with precise timing (`--at`)            |
-| Run weekly deep analysis                | Scheduled Tasks (Cron) | Standalone task, can use different model         |
-| Check inbox every 30 min                | Heartbeat              | Batches with other checks, context-aware         |
-| Monitor calendar for upcoming events    | Heartbeat              | Natural fit for periodic awareness               |
-| Check in after a mentioned interview    | Inferred Commitments   | Memory-like follow-up, no exact reminder request |
-| Gentle care check-in after user context | Inferred Commitments   | Scoped to the same agent and channel             |
-| Inspect status of a subagent or ACP run | Background Tasks       | Tasks ledger tracks all detached work            |
-| Audit what ran and when                 | Background Tasks       | `openclaw tasks list` and `openclaw tasks audit` |
-| Multi-step research then summarize      | Task Flow              | Durable orchestration with revision tracking     |
-| Run a script on session reset           | Hooks                  | Event-driven, fires on lifecycle events          |
-| Execute code on every tool call         | Plugin hooks           | In-process hooks can intercept tool calls        |
-| Always check compliance before replying | Standing Orders        | Injected into every session automatically        |
+| Use case                                | Recommended            | Why                                                 |
+| --------------------------------------- | ---------------------- | --------------------------------------------------- |
+| Send daily report at 9 AM sharp         | Scheduled Tasks (Cron) | Exact timing, isolated execution                    |
+| Remind me in 20 minutes                 | Scheduled Tasks (Cron) | One-shot with precise timing (`--at`)               |
+| Run weekly deep analysis                | Scheduled Tasks (Cron) | Standalone task, can use different model            |
+| Check inbox every 30 min                | Heartbeat              | Batches with other checks, context-aware            |
+| Monitor calendar for upcoming events    | Heartbeat              | Natural fit for periodic awareness                  |
+| Check in after a mentioned interview    | Inferred Commitments   | Memory-like follow-up, no exact reminder request    |
+| Gentle care check-in after user context | Inferred Commitments   | Scoped to the same agent and channel                |
+| Inspect status of a subagent or ACP run | Background Tasks       | Tasks ledger tracks all detached work               |
+| Audit what ran and when                 | Background Tasks       | `openclaw tasks list` and `openclaw tasks audit`    |
+| Multi-step research then summarize      | Task Flow              | Durable orchestration with revision tracking        |
+| Run a script on session reset           | Hooks                  | Event-driven, fires on lifecycle events             |
+| Execute code on every tool call         | Plugin hooks           | In-process hooks can intercept tool calls           |
+| Always check compliance before replying | Standing Orders        | Injected into every session automatically           |
+| Find one safe ops task when idle        | Autopilot              | Explicit charter, heartbeat cadence, approval-gated |
 
 ### Scheduled Tasks (Cron) vs Heartbeat
 
@@ -97,6 +100,14 @@ Standing orders grant the agent permanent operating authority for defined progra
 
 See [Standing Orders](/automation/standing-orders).
 
+### Autopilot
+
+Autopilot is an opt-in heartbeat charter for discovering one bounded task from
+approved sources during idle time. It does not grant new tool permissions or
+bypass approvals.
+
+See [Autopilot](/automation/autopilot).
+
 ### Hooks
 
 Internal hooks are event-driven scripts triggered by agent lifecycle events
@@ -119,6 +130,7 @@ See [Heartbeat](/gateway/heartbeat).
 - **Heartbeat** handles routine monitoring (inbox, calendar, notifications) in one batched turn every 30 minutes.
 - **Hooks** react to specific events (session resets, compaction, message flow) with custom scripts. Plugin hooks cover tool calls.
 - **Standing orders** give the agent persistent context and authority boundaries.
+- **Autopilot** uses an explicit charter to discover one bounded idle-work mission.
 - **Task Flow** coordinates multi-step flows above individual tasks.
 - **Tasks** automatically track all detached work so you can inspect and audit it.
 
@@ -131,5 +143,6 @@ See [Heartbeat](/gateway/heartbeat).
 - [Hooks](/automation/hooks) — event-driven lifecycle scripts
 - [Plugin hooks](/plugins/hooks) — in-process tool, prompt, message, and lifecycle hooks
 - [Standing Orders](/automation/standing-orders) — persistent agent instructions
+- [Autopilot](/automation/autopilot) — bounded self-directed idle work
 - [Heartbeat](/gateway/heartbeat) — periodic main-session turns
 - [Configuration Reference](/gateway/configuration-reference) — all config keys

@@ -52,6 +52,15 @@ Do not edit it by hand; run `pnpm docs:map:gen`.
 - Headings:
   - H2: Related
 
+## automation/autopilot.md
+
+- Route: /automation/autopilot
+- Headings:
+  - H2: Quick start
+  - H2: Runtime behavior
+  - H2: Audit and approval
+  - H2: Related
+
 ## automation/clawflow.md
 
 - Route: /automation/clawflow
@@ -139,6 +148,7 @@ Do not edit it by hand; run `pnpm docs:map:gen`.
   - H3: Inferred commitments
   - H3: Task Flow
   - H3: Standing orders
+  - H3: Autopilot
   - H3: Hooks
   - H3: Heartbeat
   - H2: How they work together

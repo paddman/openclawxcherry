@@ -110,7 +110,7 @@ import { createLazyRuntimeModule } from "../shared/lazy-runtime.js";
 import { escapeRegExp } from "../utils.js";
 import { MAX_SAFE_TIMEOUT_DELAY_MS, resolveSafeTimeoutDelayMs } from "../utils/timer-delay.js";
 import { loadOrCreateDeviceIdentity } from "./device-identity.js";
-import { formatErrorMessage, hasErrnoCode } from "./errors.js";
+import { formatErrorMessage } from "./errors.js";
 import { resolveMainScopedEventSessionKey } from "./event-session-routing.js";
 import { isWithinActiveHours, resolveActiveHoursTimezone } from "./heartbeat-active-hours.js";
 import { recordRunStart, shouldDeferWake, type DeferDecision } from "./heartbeat-cooldown.js";
@@ -177,6 +177,14 @@ const log = createSubsystemLogger("gateway/heartbeat");
 const loadHeartbeatRunnerRuntime = createLazyRuntimeModule(
   () => import("./heartbeat-runner.runtime.js"),
 );
+
+// AUTOPILOT.md is intentionally heartbeat-only: it opts an agent into bounded
+// idle-work discovery without turning every normal conversation into an autonomous run.
+const AUTOPILOT_FILENAME = "AUTOPILOT.md";
+const AUTOPILOT_CONTEXT_PROMPT =
+  "Autopilot mode is enabled by AUTOPILOT.md. For self-directed work, treat it as the sole charter: use only its named sources, never infer or repeat work from chat history, check for running or blocked work first, and choose at most one bounded mission.";
+const AUTOPILOT_SAFETY_GUARDRAIL =
+  "The charter never grants tools or permissions. Read-only inspection, analysis, and dry runs may proceed; any state change, external delivery, production action, spending, or destructive operation requires the existing approval policy and a valid approval. Never bypass that policy. Verify outcomes and report the source, action, evidence, and approval status.";
 
 const HEARTBEAT_ALWAYS_BUSY_LANES = [CommandLane.Cron, CommandLane.CronNested] as const;
 const DEFAULT_HEARTBEAT_TIMEOUT_SECONDS = 10 * 60;
@@ -978,6 +986,7 @@ type HeartbeatPreflight = HeartbeatWakePayloadFlags & {
   skipReason?: HeartbeatSkipReason;
   tasks?: HeartbeatTask[];
   heartbeatFileContent?: string;
+  autopilotFileContent?: string;
 };
 
 function inferHeartbeatWakeSourceFromReason(reason?: string): HeartbeatWakeSource | undefined {
@@ -1008,6 +1017,19 @@ function resolveHeartbeatWakePayloadFlags(params: {
     isCronWake: source === "cron",
     isWakePayload: source === "hook" || source === "acp-spawn" || reason === "wake",
   };
+}
+
+async function readOptionalHeartbeatWorkspaceFile(filePath: string): Promise<string | undefined> {
+  try {
+    return await fs.readFile(filePath, "utf-8");
+  } catch {
+    // A missing or unreadable optional charter must not stop the normal heartbeat path.
+    return undefined;
+  }
+}
+
+function isAutopilotCharterEnabled(content: string | undefined): boolean {
+  return content !== undefined && !isHeartbeatContentEffectivelyEmpty(content);
 }
 
 async function resolveHeartbeatPreflight(params: {
@@ -1090,39 +1112,42 @@ async function resolveHeartbeatPreflight(params: {
 
   const workspaceDir = resolveAgentWorkspaceDir(params.cfg, params.agentId);
   const heartbeatFilePath = path.join(workspaceDir, DEFAULT_HEARTBEAT_FILENAME);
-  let heartbeatFileContent: string | undefined;
-  try {
-    heartbeatFileContent = await fs.readFile(heartbeatFilePath, "utf-8");
-    const tasks = parseHeartbeatTasks(heartbeatFileContent);
-    if (
-      isHeartbeatContentEffectivelyEmpty(heartbeatFileContent) &&
-      tasks.length === 0 &&
-      dueCommitments.length === 0
-    ) {
-      return {
-        ...basePreflight,
-        skipReason: "empty-heartbeat-file",
-        tasks: [],
-        heartbeatFileContent,
-      };
-    }
-    // Return tasks even if file has other content - backward compatible
+  const autopilotFilePath = path.join(workspaceDir, AUTOPILOT_FILENAME);
+  // Heartbeats are the reload boundary for operator-owned workspace charters:
+  // reread them each scheduled cycle so disabling AUTOPILOT.md takes effect
+  // before the next autonomous decision.
+  const [heartbeatFileContent, autopilotFileContent] = await Promise.all([
+    readOptionalHeartbeatWorkspaceFile(heartbeatFilePath),
+    readOptionalHeartbeatWorkspaceFile(autopilotFilePath),
+  ]);
+  const tasks =
+    heartbeatFileContent === undefined ? undefined : parseHeartbeatTasks(heartbeatFileContent);
+  const hasAutopilotCharter = isAutopilotCharterEnabled(autopilotFileContent);
+
+  if (
+    heartbeatFileContent !== undefined &&
+    isHeartbeatContentEffectivelyEmpty(heartbeatFileContent) &&
+    tasks?.length === 0 &&
+    !hasAutopilotCharter &&
+    dueCommitments.length === 0
+  ) {
     return {
       ...basePreflight,
-      tasks,
+      skipReason: "empty-heartbeat-file",
+      tasks: [],
       heartbeatFileContent,
+      ...(autopilotFileContent !== undefined ? { autopilotFileContent } : {}),
     };
-  } catch (err: unknown) {
-    if (hasErrnoCode(err, "ENOENT")) {
-      // Missing HEARTBEAT.md is intentional in some setups (for example, when
-      // heartbeat instructions live outside the file), so keep the run active.
-      // The heartbeat prompt already says "if it exists".
-      return basePreflight;
-    }
-    // For other read errors, proceed with heartbeat as before.
   }
 
-  return basePreflight;
+  // Preserve the absent-file shape for HEARTBEAT.md while allowing an optional
+  // AUTOPILOT.md charter to activate the otherwise idle heartbeat loop.
+  return {
+    ...basePreflight,
+    ...(tasks ? { tasks } : {}),
+    ...(heartbeatFileContent !== undefined ? { heartbeatFileContent } : {}),
+    ...(autopilotFileContent !== undefined ? { autopilotFileContent } : {}),
+  };
 }
 
 type HeartbeatPromptResolution = {
@@ -1213,6 +1238,14 @@ function appendHeartbeatFileDirectives(prompt: string, heartbeatFileContent?: st
   return `${prompt}\n\nAdditional context from HEARTBEAT.md:\n${directives}`;
 }
 
+function appendAutopilotFileDirectives(prompt: string, autopilotFileContent?: string): string {
+  if (!isAutopilotCharterEnabled(autopilotFileContent)) {
+    return prompt;
+  }
+  const charter = autopilotFileContent.trim();
+  return `${prompt}\n\n${AUTOPILOT_CONTEXT_PROMPT}\n\nAutopilot charter from ${AUTOPILOT_FILENAME}:\n${charter}\n\n${AUTOPILOT_SAFETY_GUARDRAIL}`;
+}
+
 function resolveHeartbeatRunPrompt(params: {
   cfg: OpenClawConfig;
   heartbeat?: HeartbeatConfig;
@@ -1247,6 +1280,7 @@ function resolveHeartbeatRunPrompt(params: {
     useHeartbeatResponseTool: false,
   });
   const hasDueCommitments = Boolean(commitmentPrompt);
+  const hasAutopilotCharter = isAutopilotCharterEnabled(params.preflight.autopilotFileContent);
   if (params.runScope === "commitment-only") {
     if (commitmentPrompt) {
       return {
@@ -1301,14 +1335,16 @@ ${completionInstruction}`;
         usesHeartbeatResponseTool: false,
       };
     }
-    return {
-      prompt: null,
-      hasExecCompletion: false,
-      hasRelayableExecCompletion: false,
-      hasCronEvents: false,
-      hasDueCommitments: false,
-      usesHeartbeatResponseTool: false,
-    };
+    if (!hasAutopilotCharter || hasExecCompletion || hasCronEvents) {
+      return {
+        prompt: null,
+        hasExecCompletion: false,
+        hasRelayableExecCompletion: false,
+        hasCronEvents: false,
+        hasDueCommitments: false,
+        usesHeartbeatResponseTool: false,
+      };
+    }
   }
 
   const baseUsesHeartbeatResponseTool = params.useHeartbeatResponseTool && !commitmentPrompt;
@@ -1330,9 +1366,20 @@ ${completionInstruction}`;
     basePromptWithHint,
     params.heartbeatFileContent,
   );
+  const promptWithAutopilot =
+    hasAutopilotCharter &&
+    params.dueTasks.length === 0 &&
+    !commitmentPrompt &&
+    !hasExecCompletion &&
+    !hasCronEvents
+      ? appendAutopilotFileDirectives(
+          basePromptWithDirectives,
+          params.preflight.autopilotFileContent,
+        )
+      : basePromptWithDirectives;
   const prompt = commitmentPrompt
     ? `${basePromptWithDirectives}\n\n${commitmentPrompt}`
-    : basePromptWithDirectives;
+    : promptWithAutopilot;
 
   return {
     prompt,
