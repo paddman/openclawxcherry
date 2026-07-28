@@ -1,0 +1,30 @@
+{
+  "name": "@openclaw/cherryflow-bridge",
+  "version": "2026.6.11",
+  "private": true,
+  "description": "OpenClawXCherry Agent Runtime API for CherryFlow workflow execution.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/paddman/openclawxcherry"
+  },
+  "type": "module",
+  "devDependencies": {
+    "@openclaw/plugin-sdk": "workspace:*"
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.6.11"
+  },
+  "peerDependenciesMeta": {
+    "openclaw": {
+      "optional": true
+    }
+  },
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "compat": {
+      "pluginApi": ">=2026.6.11"
+    }
+  }
+}

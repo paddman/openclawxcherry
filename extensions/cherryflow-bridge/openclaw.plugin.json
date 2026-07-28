@@ -1,0 +1,65 @@
+{
+  "id": "cherryflow-bridge",
+  "name": "CherryFlow Agent Runtime API",
+  "description": "Expose the authenticated OpenClawXCherry runtime API used by CherryFlow agent workflow nodes.",
+  "activation": {
+    "onStartup": true
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "tokenEnv": {
+        "type": "string",
+        "default": "CHERRYFLOW_BRIDGE_TOKEN",
+        "description": "Environment variable containing the shared CherryFlow runtime token."
+      },
+      "allowedAgentIds": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+        },
+        "default": [
+          "cherryflow-agent"
+        ],
+        "description": "OpenClawXCherry agent IDs that CherryFlow may execute. An empty array allows any syntactically valid agent ID."
+      },
+      "maxConcurrentRuns": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 64,
+        "default": 4
+      },
+      "maxBodyBytes": {
+        "type": "integer",
+        "minimum": 1024,
+        "maximum": 8388608,
+        "default": 1048576
+      },
+      "defaultTimeoutMs": {
+        "type": "integer",
+        "minimum": 1000,
+        "maximum": 600000,
+        "default": 55000
+      },
+      "maxTimeoutMs": {
+        "type": "integer",
+        "minimum": 1000,
+        "maximum": 3600000,
+        "default": 600000
+      },
+      "runTtlMs": {
+        "type": "integer",
+        "minimum": 60000,
+        "maximum": 86400000,
+        "default": 3600000
+      },
+      "retainSessions": {
+        "type": "boolean",
+        "default": true,
+        "description": "Keep OpenClawXCherry session transcripts after CherryFlow runtime runs complete."
+      }
+    }
+  }
+}
